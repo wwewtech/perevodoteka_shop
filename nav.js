@@ -1,4 +1,3 @@
-// nav.js
 function renderNavbar(currentPageId) {
     const navHtml = `
         <header class="bg-white border-b border-slate-200 sticky top-0 z-40">
