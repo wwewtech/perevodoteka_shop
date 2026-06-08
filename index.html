@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Витрина: Каталог услуг перевода</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body class="bg-slate-50 font-sans text-slate-800 min-h-screen">
+    <div id="navbar-placeholder"></div>
+
+    <main class="max-w-7xl mx-auto px-4 py-8 space-y-12">
+        <section class="space-y-6">
+            <div class="border-b border-slate-200 pb-3">
+                <h2 class="text-lg font-bold text-emerald-900 flex items-center gap-2">
+                    <span class="w-2 h-5 bg-emerald-600 rounded"></span>
+                    Каталог услуг (Витрина)
+                </h2>
+                <p class="text-xs text-slate-500">Симуляция поиска и калькуляции сложных услуг по веткам дерева категорий</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-6">
+                    <div>
+                        <h3 class="font-bold text-slate-800 text-xs uppercase tracking-wider mb-3">Фильтр по категориям</h3>
+                        <div id="catalog-category-filter-tree" class="space-y-1 text-xs">
+                            <!-- Дерево фильтров -->
+                        </div>
+                    </div>
+
+                    <div class="border-t border-slate-150 pt-4">
+                        <h3 class="font-bold text-slate-800 text-xs uppercase tracking-wider mb-3">Фильтр по языку</h3>
+                        <div class="grid grid-cols-2 gap-2 text-xs">
+                            <div>
+                                <label class="block text-[10px] text-slate-500 mb-0.5">Из:</label>
+                                <select id="filter-lang-source" onchange="renderProductsCatalog()" class="w-full px-2 py-1 border border-slate-300 rounded">
+                                    <option value="">Все</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-[10px] text-slate-500 mb-0.5">В:</label>
+                                <select id="filter-lang-target" onchange="renderProductsCatalog()" class="w-full px-2 py-1 border border-slate-300 rounded">
+                                    <option value="">Все</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="md:col-span-3 space-y-4">
+                    <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col sm:flex-row gap-4 justify-between items-center text-xs">
+                        <div class="relative w-full sm:w-72">
+                            <input type="text" id="catalog-search" oninput="renderProductsCatalog()" placeholder="Поиск по названию или описанию..." class="w-full pl-8 pr-3 py-2 border border-slate-300 rounded-md focus:outline-none">
+                            <span class="absolute left-2.5 top-2.5 text-slate-400">🔍</span>
+                        </div>
+
+                        <div class="text-slate-500 flex flex-wrap gap-1 items-center" id="catalog-breadcrumbs">
+                            <!-- Крошки -->
+                        </div>
+
+                        <div class="flex items-center gap-2 w-full sm:w-auto">
+                            <label class="text-slate-500 whitespace-nowrap">Сортировка:</label>
+                            <select id="catalog-sort" onchange="renderProductsCatalog()" class="px-2 py-1.5 border border-slate-300 rounded-md w-full sm:w-auto">
+                                <option value="price_asc">Сначала дешевые</option>
+                                <option value="price_desc">Сначала дорогие</option>
+                                <option value="name_asc">По названию (А-Я)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div id="catalog-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <!-- Карточки товаров -->
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="store.js"></script>
+    <script src="nav.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            renderNavbar('nav-catalog');
+            refreshUI();
+        });
+
+        let selectedCategoryFilterId = null;
+
+        function renderCatalogCategoryFilterTree(parentId = null, depth = 0) {
+            const list = store.categories.filter(c => c.parentId === parentId);
+            let html = '';
+
+            if (parentId === null) {
+                const activeAllClass = selectedCategoryFilterId === null ? 'bg-emerald-50 text-emerald-700 font-bold' : 'text-slate-600 hover:bg-slate-50';
+                html += `
+                    <div onclick="setCategoryFilter(null)" class="cursor-pointer py-1 px-2 rounded transition flex items-center justify-between ${activeAllClass}">
+                        <span>🌐 Все категории</span>
+                    </div>
+                `;
+            }
+
+            list.forEach(c => {
+                const indent = depth * 12;
+                const isSelected = selectedCategoryFilterId === c.id;
+                const activeClass = isSelected ? 'bg-emerald-50 text-emerald-700 font-bold border-l-2 border-emerald-600' : 'text-slate-600 hover:bg-slate-50';
+                
+                html += `
+                    <div onclick="setCategoryFilter('${c.id}')" class="cursor-pointer py-1 px-2 rounded transition flex items-center justify-between ${activeClass}" style="margin-left: ${indent}px">
+                        <span>📁 ${store.escapeHtml(c.name)}</span>
+                    </div>
+                `;
+                html += renderCatalogCategoryFilterTree(c.id, depth + 1);
+            });
+
+            if (parentId === null) {
+                document.getElementById("catalog-category-filter-tree").innerHTML = html;
+            }
+            return html;
+        }
+
+        function setCategoryFilter(id) {
+            selectedCategoryFilterId = id;
+            renderCatalogCategoryFilterTree();
+            renderProductsCatalog();
+        }
+
+        function updateLanguageFilters() {
+            const sourceSelect = document.getElementById("filter-lang-source");
+            const targetSelect = document.getElementById("filter-lang-target");
+
+            const sources = [...new Set(store.products.map(p => p.sourceLang))].filter(Boolean);
+            const targets = [...new Set(store.products.map(p => p.targetLang))].filter(Boolean);
+
+            const prevSource = sourceSelect.value;
+            const prevTarget = targetSelect.value;
+
+            let sourceHtml = '<option value="">Все</option>';
+            sources.forEach(code => {
+                const lang = store.languages.find(l => l.code === code);
+                sourceHtml += `<option value="${code}">${lang ? store.escapeHtml(lang.name) : store.escapeHtml(code.toUpperCase())}</option>`;
+            });
+            sourceSelect.innerHTML = sourceHtml;
+            sourceSelect.value = prevSource;
+
+            let targetHtml = '<option value="">Все</option>';
+            targets.forEach(code => {
+                const lang = store.languages.find(l => l.code === code);
+                targetHtml += `<option value="${code}">${lang ? store.escapeHtml(lang.name) : store.escapeHtml(code.toUpperCase())}</option>`;
+            });
+            targetSelect.innerHTML = targetHtml;
+            targetSelect.value = prevTarget;
+        }
+
+        function renderBreadcrumbs() {
+            const breadcrumbsContainer = document.getElementById("catalog-breadcrumbs");
+            if (!selectedCategoryFilterId) {
+                breadcrumbsContainer.innerHTML = `<span class="text-emerald-700 font-medium">Все категории</span>`;
+                return;
+            }
+
+            const pathIds = store.getCategoryPathIds(selectedCategoryFilterId);
+            let crumbs = [];
+            
+            pathIds.forEach((id) => {
+                const cat = store.categories.find(c => c.id === id);
+                if (cat) {
+                    crumbs.push(`<span class="hover:underline cursor-pointer text-slate-700 font-medium" onclick="setCategoryFilter('${cat.id}')">${store.escapeHtml(cat.name)}</span>`);
+                }
+            });
+
+            breadcrumbsContainer.innerHTML = crumbs.join(' <span class="text-slate-300">/</span> ');
+        }
+
+        // Собирает текстовый контекст цепочки категорий до самого верха (кроме текущего товара)
+        function getCardBreadcrumbs(p) {
+            if (!p.categoryPathIds || p.categoryPathIds.length <= 1) {
+                return '';
+            }
+            const parentPathIds = p.categoryPathIds.slice(0, -1);
+            return parentPathIds.map(id => {
+                const c = store.categories.find(cat => cat.id === id);
+                return c ? c.name : '';
+            }).filter(Boolean).join(' / ');
+        }
+
+        function renderProductsCatalog() {
+            const searchVal = document.getElementById("catalog-search").value.toLowerCase().trim();
+            const sortVal = document.getElementById("catalog-sort").value;
+            const langSourceVal = document.getElementById("filter-lang-source").value;
+            const langTargetVal = document.getElementById("filter-lang-target").value;
+            
+            const grid = document.getElementById("catalog-grid");
+            
+            renderBreadcrumbs();
+
+            let filtered = store.products.filter(p => {
+                if (selectedCategoryFilterId && !p.categoryPathIds.includes(selectedCategoryFilterId)) {
+                    return false;
+                }
+                
+                if (langSourceVal && p.sourceLang !== langSourceVal) return false;
+                if (langTargetVal && p.targetLang !== langTargetVal) return false;
+
+                if (searchVal) {
+                    const matchName = p.name.toLowerCase().includes(searchVal);
+                    const matchDesc = p.description.toLowerCase().includes(searchVal);
+                    if (!matchName && !matchDesc) return false;
+                }
+
+                return true;
+            });
+
+            filtered.forEach(p => {
+                p._calculatedBasePrice = p.basePrice;
+                p.components.forEach(c => {
+                    if (c.isRequired && c.additionalPrice) {
+                        p._calculatedBasePrice += c.additionalPrice;
+                    }
+                });
+            });
+
+            if (sortVal === "price_asc") {
+                filtered.sort((a, b) => a._calculatedBasePrice - b._calculatedBasePrice);
+            } else if (sortVal === "price_desc") {
+                filtered.sort((a, b) => b._calculatedBasePrice - a._calculatedBasePrice);
+            } else if (sortVal === "name_asc") {
+                filtered.sort((a, b) => a.name.localeCompare(b.name));
+            }
+
+            let html = '';
+            filtered.forEach(p => {
+                const sourceLangName = store.languages.find(l => l.code === p.sourceLang)?.name || p.sourceLang.toUpperCase();
+                const targetLangName = store.languages.find(l => l.code === p.targetLang)?.name || p.targetLang.toUpperCase();
+                const baseRequiredPrice = p._calculatedBasePrice;
+                const pathText = getCardBreadcrumbs(p);
+
+                html += `
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between hover:shadow-md transition" id="prod-card-${p.id}">
+                        <div>
+                            <div class="flex flex-col gap-1 mb-2">
+                                ${pathText ? `
+                                    <span class="text-[9px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded font-bold uppercase tracking-wider self-start">
+                                        ${store.escapeHtml(pathText)}
+                                    </span>
+                                ` : ''}
+                            </div>
+
+                            <h4 class="font-bold text-slate-950 text-sm mb-1">${store.escapeHtml(p.name)}</h4>
+                            <p class="text-slate-500 text-xs mb-3 line-clamp-3">${store.escapeHtml(p.description || 'Без описания')}</p>
+
+                            <div class="text-[10px] bg-slate-50 p-2 rounded-lg space-y-1 border border-slate-100 mb-4">
+                                <div class="flex justify-between">
+                                    <span class="text-slate-400">Направление:</span>
+                                    <span class="font-bold text-slate-700">${store.escapeHtml(sourceLangName)} → ${store.escapeHtml(targetLangName)}</span>
+                                </div>
+                            </div>
+
+                            <div class="space-y-2 mb-4 border-t border-slate-100 pt-3">
+                                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Компоненты перевода:</span>
+                                ${p.components.map(c => {
+                                    if (c.isRequired) {
+                                        return `
+                                            <div class="flex items-center justify-between text-xs text-slate-700 bg-emerald-50/50 p-1.5 rounded">
+                                                <span>🔸 ${store.escapeHtml(c.name)}</span>
+                                                <span class="text-[10px] text-emerald-700 font-bold">Обязательно ${c.additionalPrice > 0 ? `(+${c.additionalPrice})` : ''}</span>
+                                            </div>
+                                        `;
+                                    } else {
+                                        return `
+                                            <label class="flex items-center justify-between text-xs text-slate-700 bg-slate-50/50 p-1.5 rounded cursor-pointer select-none hover:bg-slate-100/50 transition">
+                                                <span class="flex items-center gap-2">
+                                                    <input type="checkbox" data-additional-price="${c.additionalPrice}" onchange="recalculateCardPrice('${p.id}')" class="prod-opt-checkbox h-3.5 w-3.5 text-emerald-600 border-slate-300 rounded">
+                                                    <span>🔹 ${store.escapeHtml(c.name)}</span>
+                                                </span>
+                                                <span class="text-[10px] font-bold text-slate-500">+${c.additionalPrice}</span>
+                                            </label>
+                                        `;
+                                    }
+                                }).join('')}
+                            </div>
+                        </div>
+
+                        <div class="border-t border-slate-150 pt-3 flex justify-between items-center mt-2">
+                            <span class="text-xs text-slate-400">Итоговая стоимость:</span>
+                            <span class="text-lg font-black text-emerald-700 card-total-price" data-base-price="${baseRequiredPrice}">
+                                ${baseRequiredPrice}
+                            </span>
+                        </div>
+                    </div>
+                `;
+            });
+
+            grid.innerHTML = html || `
+                <div class="col-span-2 text-center py-12 bg-white rounded-xl border border-slate-200">
+                    <p class="text-slate-400 italic">Товары, соответствующие фильтрам, не обнаружены</p>
+                </div>
+            `;
+        }
+        
+        function recalculateCardPrice(productId) {
+            const card = document.getElementById(`prod-card-${productId}`);
+            if (!card) return;
+
+            const priceLabel = card.querySelector(".card-total-price");
+            const basePrice = parseFloat(priceLabel.getAttribute("data-base-price"));
+            
+            let finalPrice = basePrice;
+
+            const checkboxes = card.querySelectorAll(".prod-opt-checkbox");
+            checkboxes.forEach(cb => {
+                if (cb.checked) {
+                    finalPrice += parseFloat(cb.getAttribute("data-additional-price")) || 0;
+                }
+            });
+
+            priceLabel.textContent = finalPrice;
+        }
+
+        function refreshUI() {
+            renderCatalogCategoryFilterTree();
+            updateLanguageFilters();
+            renderProductsCatalog();
+        }
+    </script>
+</body>
+</html>

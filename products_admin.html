@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Админка: Выпуск готовых товаров</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 font-sans text-slate-800 min-h-screen">
+    <div id="navbar-placeholder"></div>
+
+    <main class="max-w-7xl mx-auto px-4 py-8 space-y-12">
+        <section class="space-y-6">
+            <div class="border-b border-slate-200 pb-3">
+                <h2 class="text-lg font-bold text-indigo-900 flex items-center gap-2">
+                    <span class="w-2 h-5 bg-indigo-600 rounded"></span>
+                    Настройка услуг (товаров) для подкатегорий
+                </h2>
+                <p class="text-xs text-slate-500">Настройка базовых тарифов, языковых пар и компонентов для конечных подкатегорий дерева</p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col h-[700px] overflow-y-auto">
+                    <h3 class="font-bold text-slate-800 text-sm mb-4" id="prod-form-title">Настроить конечную услугу</h3>
+                    <form id="product-form" onsubmit="handleProductSubmit(event)" class="space-y-4 text-xs">
+                        
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-500 mb-1">Конечная подкатегория перевода (Только leaf-узлы):</label>
+                            <select id="prod-category-select" required onchange="handleCategorySelectionChange(this.value)" class="w-full px-2.5 py-2 border border-slate-300 rounded-lg focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none">
+                                <option value="">-- Выберите подкатегорию --</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-500 mb-1">Использовать чертеж (Опционально):</label>
+                            <select id="prod-template-select" onchange="applyTemplateToProductForm(this.value)" class="w-full px-2.5 py-1.5 border border-slate-300 rounded focus:border-indigo-500">
+                                <option value="">[Создать без шаблона — ручной ввод]</option>
+                            </select>
+                        </div>
+
+                        <div class="space-y-2">
+                            <input type="text" id="prod-name" placeholder="Название услуги для витрины" required class="w-full px-2.5 py-1.5 border border-slate-300 rounded focus:border-indigo-500">
+                            <textarea id="prod-desc" placeholder="Описание для покупателей" class="w-full px-2.5 py-1.5 border border-slate-300 rounded focus:border-indigo-500" rows="2"></textarea>
+                            
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-[10px] font-bold text-slate-500 mb-1">Язык оригинала:</label>
+                                    <select id="prod-source" required class="w-full px-2.5 py-1.5 border border-slate-300 rounded focus:border-indigo-500">
+                                        <option value="">-- Выберите язык --</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-bold text-slate-500 mb-1">Язык перевода:</label>
+                                    <select id="prod-target" required class="w-full px-2.5 py-1.5 border border-slate-300 rounded focus:border-indigo-500">
+                                        <option value="">-- Выберите язык --</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <input type="number" step="0.01" id="prod-price" placeholder="Базовая цена услуги" required class="w-full px-2.5 py-1.5 border border-slate-300 rounded focus:border-indigo-500">
+                        </div>
+
+                        <div class="border-t border-slate-200 pt-3">
+                            <span class="text-[10px] font-bold text-slate-500 block mb-2">Настраиваемые компоненты:</span>
+                            <div id="prod-components-container" class="space-y-2">
+                                <!-- Рендерится динамически -->
+                            </div>
+                            <button type="button" onclick="addProductComponentRow()" class="mt-2 text-[10px] text-indigo-600 hover:text-indigo-800 font-semibold flex items-center gap-1">+ Добавить компонент</button>
+                        </div>
+
+                        <div class="space-y-2 pt-2">
+                            <button type="submit" id="prod-submit-btn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 px-4 rounded-lg transition text-xs uppercase tracking-wider">
+                                Применить статус товара
+                            </button>
+                            <div id="deconfigure-btn-container"></div>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col h-[700px]">
+                    <h3 class="font-bold text-slate-800 text-sm mb-4">Настроенные услуги (Товары)</h3>
+                    <div id="products-list" class="flex-1 overflow-y-auto space-y-3 pr-1">
+                        <!-- Список товаров -->
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="store.js"></script>
+    <script src="nav.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            renderNavbar('nav-products-admin');
+            refreshUI();
+        });
+
+        let prodComponents = [];
+
+        function getLeafCategories() {
+            return store.categories.filter(cat => {
+                const hasChildren = store.categories.some(child => child.parentId === cat.id);
+                return !hasChildren;
+            });
+        }
+
+        function getCategoryFullPathName(catId) {
+            const pathIds = store.getCategoryPathIds(catId);
+            return pathIds.map(id => {
+                const c = store.categories.find(cat => cat.id === id);
+                return c ? c.name : '';
+            }).filter(Boolean).join(' → ');
+        }
+
+        function updateTemplatesDropdown() {
+            const select = document.getElementById("prod-template-select");
+            let html = `<option value="">[Создать без шаблона — ручной ввод]</option>`;
+            store.templates.forEach(t => {
+                html += `<option value="${t.id}">${store.escapeHtml(t.name)} (база: ${t.basePrice})</option>`;
+            });
+            select.innerHTML = html;
+        }
+
+        function updateProductCategoryDropdown() {
+            const select = document.getElementById("prod-category-select");
+            const leafs = getLeafCategories();
+            let html = '<option value="">-- Выберите конечную подкатегорию --</option>';
+            leafs.forEach(c => {
+                html += `<option value="${c.id}">${store.escapeHtml(getCategoryFullPathName(c.id))}</option>`;
+            });
+            select.innerHTML = html;
+        }
+
+        function updateProductLanguageSelectors() {
+            let optionsHtml = '<option value="">-- Выберите язык --</option>';
+            store.languages.forEach(l => {
+                optionsHtml += `<option value="${l.code}">${store.escapeHtml(l.name)} (${store.escapeHtml(l.code.toUpperCase())})</option>`;
+            });
+            document.getElementById("prod-source").innerHTML = optionsHtml;
+            document.getElementById("prod-target").innerHTML = optionsHtml;
+        }
+
+        function renderProductComponentsEditor() {
+            const container = document.getElementById("prod-components-container");
+            if (!container) return;
+            container.innerHTML = '';
+            prodComponents.forEach(comp => {
+                const rowHtml = `
+                    <div class="flex items-center gap-2 p-2 bg-slate-50 border border-slate-200 rounded text-[11px]" id="prod-row-${comp.id}">
+                        <input type="text" placeholder="Часть документа" required value="${comp.name}" class="prod-comp-name flex-1 px-1.5 py-1 border border-slate-300 rounded focus:outline-none" oninput="updateProductComponent('${comp.id}', 'name', this.value)">
+                        <input type="number" step="0.01" placeholder="Доп. цена" value="${comp.additionalPrice || ''}" class="prod-comp-price w-16 px-1 py-1 border border-slate-300 rounded focus:outline-none" oninput="updateProductComponent('${comp.id}', 'additionalPrice', parseFloat(this.value) || 0)">
+                        <label class="flex items-center gap-1 select-none">
+                            <input type="checkbox" ${comp.isRequired ? 'checked' : ''} class="prod-comp-req h-3 w-3 text-indigo-600 border-slate-300 rounded" onchange="updateProductComponent('${comp.id}', 'isRequired', this.checked)">
+                            <span class="text-[10px]">Обяз.</span>
+                        </label>
+                        <button type="button" onclick="removeProductComponentRow('${comp.id}')" class="text-rose-500 hover:text-rose-700 font-bold px-1">×</button>
+                    </div>
+                `;
+                container.insertAdjacentHTML('beforeend', rowHtml);
+            });
+        }
+
+        function addProductComponentRow() {
+            prodComponents.push({ id: store.generateUniqueId("comp"), name: "", isRequired: false, additionalPrice: 0 });
+            renderProductComponentsEditor();
+        }
+
+        function updateProductComponent(id, field, value) {
+            const idx = prodComponents.findIndex(c => c.id === id);
+            if (idx !== -1) prodComponents[idx][field] = value;
+        }
+
+        function removeProductComponentRow(id) {
+            prodComponents = prodComponents.filter(c => c.id !== id);
+            renderProductComponentsEditor();
+        }
+
+        function handleCategorySelectionChange(catId) {
+            if (!catId) {
+                document.getElementById("product-form").reset();
+                prodComponents = [];
+                addProductComponentRow();
+                document.getElementById("prod-submit-btn").textContent = "Применить статус товара";
+                document.getElementById("deconfigure-btn-container").innerHTML = '';
+                return;
+            }
+
+            const cat = store.categories.find(c => c.id === catId);
+            if (cat && cat.isProduct) {
+                document.getElementById("prod-template-select").value = cat.templateId || "";
+                document.getElementById("prod-name").value = cat.name;
+                document.getElementById("prod-desc").value = cat.description || "";
+                document.getElementById("prod-source").value = cat.sourceLang || "";
+                document.getElementById("prod-target").value = cat.targetLang || "";
+                document.getElementById("prod-price").value = cat.basePrice || 0;
+
+                prodComponents = JSON.parse(JSON.stringify(cat.components || []));
+                renderProductComponentsEditor();
+
+                document.getElementById("prod-submit-btn").textContent = "Сохранить изменения товара";
+                
+                document.getElementById("deconfigure-btn-container").innerHTML = `
+                    <button type="button" onclick="deconfigureProduct('${cat.id}')" class="w-full py-2 bg-slate-100 hover:bg-rose-50 text-rose-600 hover:text-rose-700 font-bold rounded-lg border border-slate-200 transition text-xs">
+                        Сбросить настройки товара (Снять статус услуги)
+                    </button>
+                `;
+            } else {
+                document.getElementById("prod-name").value = cat ? cat.name : "";
+                document.getElementById("prod-desc").value = "";
+                document.getElementById("prod-price").value = "";
+                document.getElementById("prod-template-select").value = "";
+                prodComponents = [];
+                addProductComponentRow();
+                document.getElementById("prod-submit-btn").textContent = "Настроить категорию как товар";
+                document.getElementById("deconfigure-btn-container").innerHTML = '';
+            }
+        }
+
+        function startEditProduct(id) {
+            document.getElementById("prod-category-select").value = id;
+            handleCategorySelectionChange(id);
+        }
+
+        function applyTemplateToProductForm(tplId) {
+            const form = document.getElementById("product-form");
+            const selectCat = document.getElementById("prod-category-select").value;
+            form.reset();
+            document.getElementById("prod-category-select").value = selectCat;
+
+            if (!tplId) {
+                prodComponents = [];
+                addProductComponentRow();
+                return;
+            }
+
+            const tpl = store.templates.find(t => t.id === tplId);
+            if (!tpl) return;
+
+            const cat = store.categories.find(c => c.id === selectCat);
+            document.getElementById("prod-name").value = cat ? cat.name : tpl.name;
+            document.getElementById("prod-desc").value = tpl.description;
+            document.getElementById("prod-source").value = tpl.sourceLang;
+            document.getElementById("prod-target").value = tpl.targetLang;
+            document.getElementById("prod-price").value = tpl.basePrice;
+
+            prodComponents = JSON.parse(JSON.stringify(tpl.components.map(c => ({...c, id: store.generateUniqueId("comp")}))));
+            renderProductComponentsEditor();
+        }
+
+        function handleProductSubmit(e) {
+            e.preventDefault();
+            const tplId = document.getElementById("prod-template-select").value || null;
+            const categoryId = document.getElementById("prod-category-select").value;
+            const name = document.getElementById("prod-name").value.trim();
+            const desc = document.getElementById("prod-desc").value.trim();
+            const sourceLang = document.getElementById("prod-source").value;
+            const targetLang = document.getElementById("prod-target").value;
+            const basePrice = parseFloat(document.getElementById("prod-price").value) || 0;
+
+            if (!categoryId) {
+                alert("Выберите подкатегорию привязки!");
+                return;
+            }
+
+            const cat = store.categories.find(c => c.id === categoryId);
+            if (cat) {
+                cat.isProduct = true;
+                cat.name = name;
+                cat.description = desc;
+                cat.templateId = tplId;
+                cat.sourceLang = sourceLang;
+                cat.targetLang = targetLang;
+                cat.basePrice = basePrice;
+                cat.components = prodComponents.filter(c => c.name.trim() !== '');
+                
+                store.saveCategories();
+            }
+
+            document.getElementById("product-form").reset();
+            prodComponents = [];
+            addProductComponentRow();
+            document.getElementById("prod-submit-btn").textContent = "Применить статус товара";
+            document.getElementById("deconfigure-btn-container").innerHTML = '';
+            refreshUI();
+        }
+
+        function deconfigureProduct(id) {
+            if (!confirm("Вы уверены, что хотите снять статус услуги с этой подкатегории? Настройки цены и компонентов будут стерты.")) {
+                return;
+            }
+            const cat = store.categories.find(c => c.id === id);
+            if (cat) {
+                cat.isProduct = false;
+                delete cat.sourceLang;
+                delete cat.targetLang;
+                delete cat.basePrice;
+                delete cat.components;
+                delete cat.description;
+                delete cat.templateId;
+                store.saveCategories();
+            }
+            document.getElementById("product-form").reset();
+            prodComponents = [];
+            addProductComponentRow();
+            document.getElementById("prod-submit-btn").textContent = "Применить статус товара";
+            document.getElementById("deconfigure-btn-container").innerHTML = '';
+            refreshUI();
+        }
+
+        function renderProductsList() {
+            const container = document.getElementById("products-list");
+            let html = '';
+
+            const activeProducts = store.categories.filter(c => c.isProduct);
+
+            activeProducts.forEach(p => {
+                const pathName = getCategoryFullPathName(p.id);
+                const sName = store.languages.find(l => l.code === p.sourceLang)?.name || p.sourceLang.toUpperCase();
+                const tName = store.languages.find(l => l.code === p.targetLang)?.name || p.targetLang.toUpperCase();
+
+                html += `
+                    <div class="bg-slate-50 p-3 rounded-lg border border-slate-200 text-xs">
+                        <div class="flex justify-between items-start gap-2">
+                            <div>
+                                <span class="font-bold text-slate-800">${store.escapeHtml(p.name)}</span>
+                                <span class="text-[10px] text-indigo-600 block">${store.escapeHtml(pathName)} | ${store.escapeHtml(sName)} → ${store.escapeHtml(tName)} | База: ${p.basePrice}</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <button onclick="startEditProduct('${p.id}')" class="text-indigo-600 hover:text-indigo-800 font-semibold px-1">Изменить</button>
+                                <button onclick="deconfigureProduct('${p.id}')" class="text-rose-500 hover:text-rose-700 font-bold px-1">×</button>
+                            </div>
+                        </div>
+                        <p class="text-slate-500 text-[10px] mt-1 italic">${store.escapeHtml(p.description) || 'Описания нет'}</p>
+                        <div class="mt-2 bg-white p-1.5 rounded border border-slate-150 space-y-1">
+                            ${(p.components || []).map(c => `
+                                <div class="flex justify-between text-[9px] text-slate-600">
+                                    <span>${c.isRequired ? '🔸' : '🔹'} ${store.escapeHtml(c.name)}</span>
+                                    <span>${c.additionalPrice > 0 ? '+' + c.additionalPrice : 'В базовой цене'}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html || '<p class="text-slate-400 italic text-center py-4 text-xs">Услуги еще не настроены. Выберите конечную подкатегорию слева и задайте параметры.</p>';
+        }
+
+        function refreshUI() {
+            updateTemplatesDropdown();
+            updateProductCategoryDropdown();
+            updateProductLanguageSelectors();
+            renderProductComponentsEditor();
+            renderProductsList();
+        }
+    </script>
+</body>
+</html>
