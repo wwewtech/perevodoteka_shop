@@ -2,7 +2,7 @@ name: Deploy Static Content to Pages
 
 on:
   push:
-    branches: ["main"] # Укажите ветку по умолчанию (main или master)
+    branches: ["main"]
 
 permissions:
   contents: read
@@ -19,6 +19,9 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
+    # Принудительно запускаем шаги на Node.js 24 во избежание предупреждений депрекации
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -29,7 +32,7 @@ jobs:
       - name: Upload Artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: '.' # Выгружаем все статические файлы из корня репозитория
+          path: '.'
 
       - name: Deploy to GitHub Pages
         id: deployment
