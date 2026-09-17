@@ -2,33 +2,31 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Админка: Категории документов</title>
+    <title>Категории документов — Бюро переводов</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="styles.css">
 </head>
-<body class="bg-slate-50 font-sans text-slate-800 min-h-screen">
+<body class="admin-page bg-slate-50 font-sans text-slate-800 min-h-screen">
     <div id="navbar-placeholder"></div>
 
-    <main class="max-w-7xl mx-auto px-4 py-8 space-y-12">
+    <main class="app-main max-w-7xl mx-auto px-4 py-8 space-y-12">
         <section class="space-y-6">
-            <div class="border-b border-slate-200 pb-3">
-                <h2 class="text-lg font-bold text-indigo-900 flex items-center gap-2">
-                    <span class="w-2 h-5 bg-indigo-600 rounded"></span>
-                    Управление категориями документов
-                </h2>
-                <p class="text-xs text-slate-500">Добавление корневых и вложенных разделов дерева</p>
+            <div class="page-heading">
+                <h1 class="page-title">Категории документов</h1>
+                <p class="text-sm text-slate-500">Организуйте документы по разделам и подкатегориям.</p>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <!-- Кастомная, глубоко детализированная форма -->
-                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-5">
+            <div class="workspace-grid grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="panel editor-panel bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-5">
                     <h3 class="font-bold text-slate-900 text-sm" id="cat-form-title">Создать категорию</h3>
-                    <form id="cat-form" onsubmit="handleCategorySubmit(event)" class="space-y-4">
+                    <form id="cat-form" onsubmit="handleCategorySubmit(event)" class="editor-form space-y-4">
                         <div>
-                            <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Название категории / подкатегории:</label>
+                            <label for="cat-name-input" class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Название категории (обязательно):</label>
                             <input type="text" id="cat-name-input" placeholder="Например: Паспорта" required class="block w-full text-sm px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 focus:bg-white transition-all duration-200">
                         </div>
                         <div>
-                            <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Родительская папка (Раздел дерева):</label>
+                            <label for="cat-parent-select" class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Родительская категория (необязательно):</label>
                             <select id="cat-parent-select" class="block w-full text-sm px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 focus:bg-white transition-all duration-200">
                                 <option value="">[Корневой раздел — Самый верхний уровень]</option>
                             </select>
@@ -38,8 +36,8 @@
                     </form>
                 </div>
 
-                <div class="md:col-span-2 bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col h-[500px]">
-                    <h3 class="font-bold text-slate-800 text-sm mb-4">Текущее иерархическое дерево документов</h3>
+                <div class="panel registry-panel md:col-span-2 bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col">
+                    <h3 class="font-bold text-slate-800 text-sm mb-4">Структура документов</h3>
                     <div id="admin-category-tree" class="flex-1 overflow-y-auto space-y-1.5 pr-1 text-xs">
                         <!-- Пусто по умолчанию -->
                     </div>
@@ -93,7 +91,7 @@
                 let toggleBtn = '';
                 if (hasChildren) {
                     toggleBtn = `
-                        <button onclick="toggleCollapse('${c.id}')" class="mr-1 text-slate-500 hover:text-slate-800 focus:outline-none font-bold text-[10px] w-4 h-4 rounded hover:bg-slate-100 flex items-center justify-center">
+                        <button aria-expanded="${!isCollapsed}" aria-label="${isCollapsed ? 'Развернуть' : 'Свернуть'} категорию ${store.escapeHtml(c.name)}" onclick="toggleCollapse('${c.id}')" class="mr-1 text-slate-500 hover:text-slate-800 focus:outline-none font-bold text-[10px] w-4 h-4 rounded hover:bg-slate-100 flex items-center justify-center">
                             ${isCollapsed ? '▶' : '▼'}
                         </button>
                     `;
@@ -102,16 +100,15 @@
                 }
 
                 html += `
-                    <div class="flex items-center justify-between py-1.5 border-b border-slate-100 hover:bg-slate-50 rounded" style="padding-left: ${indent}px">
+                    <div class="registry-row flex flex-wrap items-center justify-between gap-3 py-1.5 border-b border-slate-100 hover:bg-slate-50 rounded" style="padding-left: ${indent}px">
                         <span class="font-medium text-slate-700 select-none flex items-center">
                             ${toggleBtn}
-                            <span class="mr-1.5">${isCollapsed ? '📁' : '📂'}</span>
                             <span>${store.escapeHtml(c.name)}</span>
                             ${isProduct ? `<span class="ml-2 px-1.5 py-0.5 bg-emerald-100 text-emerald-800 text-[9px] font-bold rounded">Услуга</span>` : ''}
                         </span>
                         <div class="flex items-center gap-2">
                             <button onclick="startEditCategory('${c.id}')" class="text-indigo-600 hover:text-indigo-800 font-semibold px-2">Редактировать</button>
-                            <button onclick="deleteCategory('${c.id}')" class="text-rose-500 hover:text-rose-700 font-bold px-1.5">×</button>
+                            <button aria-label="Удалить категорию ${store.escapeHtml(c.name)}" onclick="deleteCategory('${c.id}')" class="text-rose-500 hover:text-rose-700 font-bold px-1.5">×</button>
                         </div>
                     </div>
                 `;
@@ -122,7 +119,7 @@
             });
             
             if (parentId === null) {
-                document.getElementById("admin-category-tree").innerHTML = html || '<p class="text-slate-400 italic text-center py-8">Дерево категорий абсолютно пусто.</p>';
+                document.getElementById("admin-category-tree").innerHTML = html || '<p class="empty-state text-slate-500 text-center py-8">Категорий пока нет. <a href="#cat-name-input" class="text-indigo-600 underline">Создайте первый раздел</a>, затем добавьте подкатегории документов.</p>';
             }
             return html;
         }

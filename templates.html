@@ -2,24 +2,23 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Админка: Конструктор схем шаблонов</title>
+    <title>Шаблоны перевода — Бюро переводов</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="styles.css">
 </head>
-<body class="bg-slate-50 font-sans text-slate-800 min-h-screen">
+<body class="admin-page bg-slate-50 font-sans text-slate-800 min-h-screen">
     <div id="navbar-placeholder"></div>
 
-    <main class="max-w-7xl mx-auto px-4 py-8 space-y-12">
+    <main class="app-main max-w-7xl mx-auto px-4 py-8 space-y-12">
         <section class="space-y-6">
-            <div class="border-b border-slate-200 pb-3">
-                <h2 class="text-lg font-bold text-indigo-900 flex items-center gap-2">
-                    <span class="w-2 h-5 bg-indigo-600 rounded"></span>
-                    Шаблоны (Конструктор схем)
-                </h2>
-                <p class="text-xs text-slate-500">Создание и изменение заготовок для производства товаров. Выбор языков производится строго из добавленных.</p>
+            <div class="page-heading">
+                <h1 class="page-title">Шаблоны перевода</h1>
+                <p class="text-sm text-slate-500">Сохраняйте языковые пары, стоимость и состав документа для выпуска услуг.</p>
             </div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col h-[700px]">
+            <div class="workspace-grid grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="panel registry-panel bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col">
                     <div class="mb-4 flex justify-between items-center">
                         <div>
                             <h3 class="font-bold text-slate-800 text-sm">Список сохраненных шаблонов</h3>
@@ -32,28 +31,37 @@
                     </div>
                 </div>
 
-                <div id="template-editor-wrapper" class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col h-[700px] overflow-y-auto hidden">
-                    <h4 class="font-bold text-slate-800 text-sm mb-4" id="template-editor-title">Создание нового шаблона схемы</h4>
-                    <form id="template-form" onsubmit="handleTemplateSubmit(event)" class="space-y-3 text-xs">
-                        <input type="text" id="tpl-name" placeholder="Название шаблона (напр. Схема паспорта)" required class="w-full px-2.5 py-1.5 border border-slate-300 rounded focus:border-indigo-500">
-                        <textarea id="tpl-desc" placeholder="Описание схемы документа" class="w-full px-2.5 py-1.5 border border-slate-300 rounded focus:border-indigo-500" rows="2"></textarea>
+                <div id="template-editor-wrapper" class="panel editor-panel bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col hidden">
+                    <h3 class="font-bold text-slate-800 text-sm mb-4" id="template-editor-title">Создание нового шаблона схемы</h3>
+                    <form id="template-form" onsubmit="handleTemplateSubmit(event)" class="editor-form space-y-3 text-xs">
+                        <div>
+                            <label for="tpl-name" class="block text-[10px] font-bold text-slate-500 mb-1">Название шаблона (обязательно):</label>
+                            <input type="text" id="tpl-name" placeholder="Например: Перевод паспорта" required class="w-full px-2.5 py-1.5 border border-slate-300 rounded focus:border-indigo-500">
+                        </div>
+                        <div>
+                            <label for="tpl-desc" class="block text-[10px] font-bold text-slate-500 mb-1">Описание (необязательно):</label>
+                            <textarea id="tpl-desc" placeholder="Особенности перевода документа" class="w-full px-2.5 py-1.5 border border-slate-300 rounded focus:border-indigo-500" rows="2"></textarea>
+                        </div>
                         
                         <div class="grid grid-cols-2 gap-4">
                             <div>
-                                <label class="block text-[10px] font-bold text-slate-500 mb-1">Язык оригинала:</label>
+                                <label for="tpl-source" class="block text-[10px] font-bold text-slate-500 mb-1">Язык оригинала (обязательно):</label>
                                 <select id="tpl-source" required class="w-full px-2.5 py-1.5 border border-slate-300 rounded focus:border-indigo-500">
                                     <option value="">-- Выберите язык --</option>
                                 </select>
                             </div>
                             <div>
-                                <label class="block text-[10px] font-bold text-slate-500 mb-1">Язык перевода:</label>
+                                <label for="tpl-target" class="block text-[10px] font-bold text-slate-500 mb-1">Язык перевода (обязательно):</label>
                                 <select id="tpl-target" required class="w-full px-2.5 py-1.5 border border-slate-300 rounded focus:border-indigo-500">
                                     <option value="">-- Выберите язык --</option>
                                 </select>
                             </div>
                         </div>
 
-                        <input type="number" step="0.01" id="tpl-price" placeholder="Базовая стоимость перевода" required class="w-full px-2.5 py-1.5 border border-slate-300 rounded focus:border-indigo-500">
+                        <div>
+                            <label for="tpl-price" class="block text-[10px] font-bold text-slate-500 mb-1">Базовая стоимость перевода (обязательно):</label>
+                            <input type="number" step="0.01" id="tpl-price" placeholder="Базовая стоимость перевода" required class="w-full px-2.5 py-1.5 border border-slate-300 rounded focus:border-indigo-500">
+                        </div>
                         
                         <div class="border-t border-slate-200 pt-3">
                             <span class="text-[10px] font-bold text-slate-500 block mb-2">Физические компоненты документа:</span>
@@ -111,14 +119,14 @@
             container.innerHTML = '';
             tplComponents.forEach(comp => {
                 const rowHtml = `
-                    <div class="flex items-center gap-2 p-2 bg-slate-50 border border-slate-200 rounded text-[11px]" id="row-${comp.id}">
-                        <input type="text" placeholder="Название части" required value="${comp.name}" class="tpl-comp-name flex-1 px-1.5 py-1 border border-slate-300 rounded focus:outline-none" oninput="updateTemplateComponent('${comp.id}', 'name', this.value)">
-                        <input type="number" step="0.01" placeholder="Доп. цена" value="${comp.additionalPrice || ''}" class="tpl-comp-price w-16 px-1 py-1 border border-slate-300 rounded focus:outline-none" oninput="updateTemplateComponent('${comp.id}', 'additionalPrice', parseFloat(this.value) || 0)">
-                        <label class="flex items-center gap-1 select-none">
-                            <input type="checkbox" ${comp.isRequired ? 'checked' : ''} class="tpl-comp-req h-3 w-3 text-indigo-600 border-slate-300 rounded" onchange="updateTemplateComponent('${comp.id}', 'isRequired', this.checked)">
-                            <span class="text-[10px]">Обяз.</span>
+                    <div class="component-editor-row grid items-center gap-2 p-2 bg-slate-50 border border-slate-200 rounded text-[11px]" id="row-${comp.id}">
+                        <input type="text" aria-label="Название компонента (обязательно)" placeholder="Название части" required value="${store.escapeHtml(comp.name)}" class="tpl-comp-name min-w-0 w-full px-1.5 py-1 border border-slate-300 rounded focus:outline-none" oninput="updateTemplateComponent('${comp.id}', 'name', this.value)">
+                        <input type="number" aria-label="Дополнительная стоимость компонента (необязательно)" step="0.01" placeholder="Доп. цена" value="${comp.additionalPrice || ''}" class="tpl-comp-price min-w-0 w-full px-1 py-1 border border-slate-300 rounded focus:outline-none" oninput="updateTemplateComponent('${comp.id}', 'additionalPrice', parseFloat(this.value) || 0)">
+                        <label for="tpl-comp-required-${comp.id}" class="flex items-center gap-1 select-none">
+                            <input id="tpl-comp-required-${comp.id}" type="checkbox" ${comp.isRequired ? 'checked' : ''} class="tpl-comp-req h-3 w-3 text-indigo-600 border-slate-300 rounded" onchange="updateTemplateComponent('${comp.id}', 'isRequired', this.checked)">
+                            <span class="text-[10px]">Обязательный</span>
                         </label>
-                        <button type="button" onclick="removeTemplateComponentRow('${comp.id}')" class="text-rose-500 hover:text-rose-700 font-bold px-1">×</button>
+                        <button type="button" aria-label="Удалить компонент" onclick="removeTemplateComponentRow('${comp.id}')" class="text-rose-500 hover:text-rose-700 font-bold px-1">×</button>
                     </div>
                 `;
                 container.insertAdjacentHTML('beforeend', rowHtml);
@@ -213,13 +221,13 @@
                 const tName = store.languages.find(l => l.code === t.targetLang)?.name || t.targetLang.toUpperCase();
 
                 html += `
-                    <div class="bg-slate-50 p-3 rounded-lg border border-slate-200 text-xs flex flex-col justify-between">
-                        <div class="flex justify-between items-start gap-2">
+                    <div class="template-card bg-slate-50 p-3 rounded-lg border border-slate-200 text-xs flex flex-col justify-between">
+                        <div class="flex flex-wrap justify-between items-start gap-3">
                             <div>
                                 <span class="font-bold text-slate-800">${store.escapeHtml(t.name)}</span>
                                 <span class="text-[10px] text-indigo-600 block">${store.escapeHtml(sName)} → ${store.escapeHtml(tName)} | Базовая стоимость: ${t.basePrice}</span>
                             </div>
-                            <div class="flex items-center gap-2">
+                            <div class="flex flex-wrap items-center gap-2">
                                 <button onclick="startEditTemplate('${t.id}')" class="text-indigo-600 hover:text-indigo-800 font-semibold px-1">Редактировать</button>
                                 <button onclick="deleteTemplate('${t.id}')" class="text-rose-500 hover:text-rose-700 font-bold px-1">Удалить</button>
                             </div>
@@ -228,7 +236,7 @@
                         <div class="mt-2 bg-white p-1.5 rounded border border-slate-150 space-y-1">
                             ${t.components.map(c => `
                                 <div class="flex justify-between text-[9px] text-slate-600">
-                                    <span>${c.isRequired ? '🔸' : '🔹'} ${store.escapeHtml(c.name)}</span>
+                                    <span>${c.isRequired ? 'Обязательный:' : 'Необязательный:'} ${store.escapeHtml(c.name)}</span>
                                     <span>${c.additionalPrice > 0 ? '+' + c.additionalPrice : 'В базовой стоимости'}</span>
                                 </div>
                             `).join('')}
@@ -237,7 +245,7 @@
                 `;
             });
 
-            container.innerHTML = html || '<p class="text-slate-400 italic text-center py-8">Шаблоны не созданы.</p>';
+            container.innerHTML = html || '<div class="empty-state text-slate-500 text-center py-8"><p>Шаблонов пока нет. Сохраните языковую пару, стоимость и компоненты документа.</p><button type="button" onclick="toggleTemplateForm(true)" class="mt-3 text-indigo-600 underline">Создать первый шаблон</button><p class="mt-2">Сначала добавьте нужные <a href="languages.html" class="text-indigo-600 underline">языки перевода</a>.</p></div>';
         }
 
         function updateTemplateLanguageSelectors() {

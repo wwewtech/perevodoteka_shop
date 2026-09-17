@@ -2,61 +2,69 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Админка: Выпуск готовых товаров</title>
+    <title>Выпуск услуг — Бюро переводов</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="styles.css">
 </head>
-<body class="bg-slate-50 font-sans text-slate-800 min-h-screen">
+<body class="admin-page bg-slate-50 font-sans text-slate-800 min-h-screen">
     <div id="navbar-placeholder"></div>
 
-    <main class="max-w-7xl mx-auto px-4 py-8 space-y-12">
+    <main class="app-main max-w-7xl mx-auto px-4 py-8 space-y-12">
         <section class="space-y-6">
-            <div class="border-b border-slate-200 pb-3">
-                <h2 class="text-lg font-bold text-indigo-900 flex items-center gap-2">
-                    <span class="w-2 h-5 bg-indigo-600 rounded"></span>
-                    Настройка услуг (товаров) для подкатегорий
-                </h2>
-                <p class="text-xs text-slate-500">Настройка базовых тарифов, языковых пар и компонентов для конечных подкатегорий дерева</p>
+            <div class="page-heading">
+                <h1 class="page-title">Выпуск услуг</h1>
+                <p class="text-sm text-slate-500">Настройте перевод, стоимость и компоненты услуги для выбранной подкатегории.</p>
             </div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col h-[700px] overflow-y-auto">
+            <div class="workspace-grid grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="panel editor-panel bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col">
                     <h3 class="font-bold text-slate-800 text-sm mb-4" id="prod-form-title">Настроить конечную услугу</h3>
-                    <form id="product-form" onsubmit="handleProductSubmit(event)" class="space-y-4 text-xs">
+                    <form id="product-form" onsubmit="handleProductSubmit(event)" class="editor-form space-y-4 text-xs">
                         
                         <div>
-                            <label class="block text-[10px] font-bold text-slate-500 mb-1">Конечная подкатегория перевода (Только leaf-узлы):</label>
+                            <label for="prod-category-select" class="block text-[10px] font-bold text-slate-500 mb-1">Категория без вложенных разделов (обязательно):</label>
                             <select id="prod-category-select" required onchange="handleCategorySelectionChange(this.value)" class="w-full px-2.5 py-2 border border-slate-300 rounded-lg focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none">
                                 <option value="">-- Выберите подкатегорию --</option>
                             </select>
                         </div>
 
                         <div>
-                            <label class="block text-[10px] font-bold text-slate-500 mb-1">Использовать чертеж (Опционально):</label>
+                            <label for="prod-template-select" class="block text-[10px] font-bold text-slate-500 mb-1">Шаблон перевода (необязательно):</label>
                             <select id="prod-template-select" onchange="applyTemplateToProductForm(this.value)" class="w-full px-2.5 py-1.5 border border-slate-300 rounded focus:border-indigo-500">
                                 <option value="">[Создать без шаблона — ручной ввод]</option>
                             </select>
                         </div>
 
                         <div class="space-y-2">
-                            <input type="text" id="prod-name" placeholder="Название услуги для витрины" required class="w-full px-2.5 py-1.5 border border-slate-300 rounded focus:border-indigo-500">
-                            <textarea id="prod-desc" placeholder="Описание для покупателей" class="w-full px-2.5 py-1.5 border border-slate-300 rounded focus:border-indigo-500" rows="2"></textarea>
+                            <div>
+                                <label for="prod-name" class="block text-[10px] font-bold text-slate-500 mb-1">Название услуги (обязательно):</label>
+                                <input type="text" id="prod-name" placeholder="Название услуги для витрины" required class="w-full px-2.5 py-1.5 border border-slate-300 rounded focus:border-indigo-500">
+                            </div>
+                            <div>
+                                <label for="prod-desc" class="block text-[10px] font-bold text-slate-500 mb-1">Описание (необязательно):</label>
+                                <textarea id="prod-desc" placeholder="Описание для покупателей" class="w-full px-2.5 py-1.5 border border-slate-300 rounded focus:border-indigo-500" rows="2"></textarea>
+                            </div>
                             
                             <div class="grid grid-cols-2 gap-3">
                                 <div>
-                                    <label class="block text-[10px] font-bold text-slate-500 mb-1">Язык оригинала:</label>
+                                    <label for="prod-source" class="block text-[10px] font-bold text-slate-500 mb-1">Язык оригинала (обязательно):</label>
                                     <select id="prod-source" required class="w-full px-2.5 py-1.5 border border-slate-300 rounded focus:border-indigo-500">
                                         <option value="">-- Выберите язык --</option>
                                     </select>
                                 </div>
                                 <div>
-                                    <label class="block text-[10px] font-bold text-slate-500 mb-1">Язык перевода:</label>
+                                    <label for="prod-target" class="block text-[10px] font-bold text-slate-500 mb-1">Язык перевода (обязательно):</label>
                                     <select id="prod-target" required class="w-full px-2.5 py-1.5 border border-slate-300 rounded focus:border-indigo-500">
                                         <option value="">-- Выберите язык --</option>
                                     </select>
                                 </div>
                             </div>
 
-                            <input type="number" step="0.01" id="prod-price" placeholder="Базовая цена услуги" required class="w-full px-2.5 py-1.5 border border-slate-300 rounded focus:border-indigo-500">
+                            <div>
+                                <label for="prod-price" class="block text-[10px] font-bold text-slate-500 mb-1">Базовая стоимость услуги (обязательно):</label>
+                                <input type="number" step="0.01" id="prod-price" placeholder="Базовая цена услуги" required class="w-full px-2.5 py-1.5 border border-slate-300 rounded focus:border-indigo-500">
+                            </div>
                         </div>
 
                         <div class="border-t border-slate-200 pt-3">
@@ -76,8 +84,8 @@
                     </form>
                 </div>
 
-                <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col h-[700px]">
-                    <h3 class="font-bold text-slate-800 text-sm mb-4">Настроенные услуги (Товары)</h3>
+                <div class="panel registry-panel bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col">
+                    <h3 class="font-bold text-slate-800 text-sm mb-4">Опубликованные услуги</h3>
                     <div id="products-list" class="flex-1 overflow-y-auto space-y-3 pr-1">
                         <!-- Список товаров -->
                     </div>
@@ -145,14 +153,14 @@
             container.innerHTML = '';
             prodComponents.forEach(comp => {
                 const rowHtml = `
-                    <div class="flex items-center gap-2 p-2 bg-slate-50 border border-slate-200 rounded text-[11px]" id="prod-row-${comp.id}">
-                        <input type="text" placeholder="Часть документа" required value="${comp.name}" class="prod-comp-name flex-1 px-1.5 py-1 border border-slate-300 rounded focus:outline-none" oninput="updateProductComponent('${comp.id}', 'name', this.value)">
-                        <input type="number" step="0.01" placeholder="Доп. цена" value="${comp.additionalPrice || ''}" class="prod-comp-price w-16 px-1 py-1 border border-slate-300 rounded focus:outline-none" oninput="updateProductComponent('${comp.id}', 'additionalPrice', parseFloat(this.value) || 0)">
-                        <label class="flex items-center gap-1 select-none">
-                            <input type="checkbox" ${comp.isRequired ? 'checked' : ''} class="prod-comp-req h-3 w-3 text-indigo-600 border-slate-300 rounded" onchange="updateProductComponent('${comp.id}', 'isRequired', this.checked)">
-                            <span class="text-[10px]">Обяз.</span>
+                    <div class="component-editor-row grid items-center gap-2 p-2 bg-slate-50 border border-slate-200 rounded text-[11px]" id="prod-row-${comp.id}">
+                        <input type="text" aria-label="Название компонента (обязательно)" placeholder="Часть документа" required value="${store.escapeHtml(comp.name)}" class="prod-comp-name min-w-0 w-full px-1.5 py-1 border border-slate-300 rounded focus:outline-none" oninput="updateProductComponent('${comp.id}', 'name', this.value)">
+                        <input type="number" aria-label="Дополнительная стоимость компонента (необязательно)" step="0.01" placeholder="Доп. цена" value="${comp.additionalPrice || ''}" class="prod-comp-price min-w-0 w-full px-1 py-1 border border-slate-300 rounded focus:outline-none" oninput="updateProductComponent('${comp.id}', 'additionalPrice', parseFloat(this.value) || 0)">
+                        <label for="prod-comp-required-${comp.id}" class="flex items-center gap-1 select-none">
+                            <input id="prod-comp-required-${comp.id}" type="checkbox" ${comp.isRequired ? 'checked' : ''} class="prod-comp-req h-3 w-3 text-indigo-600 border-slate-300 rounded" onchange="updateProductComponent('${comp.id}', 'isRequired', this.checked)">
+                            <span class="text-[10px]">Обязательный</span>
                         </label>
-                        <button type="button" onclick="removeProductComponentRow('${comp.id}')" class="text-rose-500 hover:text-rose-700 font-bold px-1">×</button>
+                        <button type="button" aria-label="Удалить компонент" onclick="removeProductComponentRow('${comp.id}')" class="text-rose-500 hover:text-rose-700 font-bold px-1">×</button>
                     </div>
                 `;
                 container.insertAdjacentHTML('beforeend', rowHtml);
@@ -224,6 +232,7 @@
             const form = document.getElementById("product-form");
             const selectCat = document.getElementById("prod-category-select").value;
             form.reset();
+            document.getElementById("prod-template-select").value = tplId;
             document.getElementById("prod-category-select").value = selectCat;
 
             if (!tplId) {
@@ -318,22 +327,22 @@
                 const tName = store.languages.find(l => l.code === p.targetLang)?.name || p.targetLang.toUpperCase();
 
                 html += `
-                    <div class="bg-slate-50 p-3 rounded-lg border border-slate-200 text-xs">
-                        <div class="flex justify-between items-start gap-2">
+                    <div class="service-summary bg-slate-50 p-3 rounded-lg border border-slate-200 text-xs">
+                        <div class="flex flex-wrap justify-between items-start gap-3">
                             <div>
                                 <span class="font-bold text-slate-800">${store.escapeHtml(p.name)}</span>
                                 <span class="text-[10px] text-indigo-600 block">${store.escapeHtml(pathName)} | ${store.escapeHtml(sName)} → ${store.escapeHtml(tName)} | База: ${p.basePrice}</span>
                             </div>
-                            <div class="flex items-center gap-2">
+                            <div class="flex flex-wrap items-center gap-2">
                                 <button onclick="startEditProduct('${p.id}')" class="text-indigo-600 hover:text-indigo-800 font-semibold px-1">Изменить</button>
-                                <button onclick="deconfigureProduct('${p.id}')" class="text-rose-500 hover:text-rose-700 font-bold px-1">×</button>
+                                <button aria-label="Снять статус услуги ${store.escapeHtml(p.name)}" onclick="deconfigureProduct('${p.id}')" class="text-rose-500 hover:text-rose-700 font-bold px-1">×</button>
                             </div>
                         </div>
                         <p class="text-slate-500 text-[10px] mt-1 italic">${store.escapeHtml(p.description) || 'Описания нет'}</p>
                         <div class="mt-2 bg-white p-1.5 rounded border border-slate-150 space-y-1">
                             ${(p.components || []).map(c => `
                                 <div class="flex justify-between text-[9px] text-slate-600">
-                                    <span>${c.isRequired ? '🔸' : '🔹'} ${store.escapeHtml(c.name)}</span>
+                                    <span>${c.isRequired ? 'Обязательный:' : 'Необязательный:'} ${store.escapeHtml(c.name)}</span>
                                     <span>${c.additionalPrice > 0 ? '+' + c.additionalPrice : 'В базовой цене'}</span>
                                 </div>
                             `).join('')}
@@ -342,7 +351,7 @@
                 `;
             });
 
-            container.innerHTML = html || '<p class="text-slate-400 italic text-center py-4 text-xs">Услуги еще не настроены. Выберите конечную подкатегорию слева и задайте параметры.</p>';
+            container.innerHTML = html || '<div class="empty-state text-slate-500 text-center py-8"><p>Услуг пока нет. Выберите категорию без вложенных разделов и задайте параметры перевода.</p><p class="mt-2">Вначале настройте <a href="categories.html" class="text-indigo-600 underline">категории документов</a> и <a href="templates.html" class="text-indigo-600 underline">шаблоны перевода</a>.</p></div>';
         }
 
         function refreshUI() {

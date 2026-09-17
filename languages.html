@@ -2,39 +2,38 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Админка: Управление языками</title>
+    <title>Языки — Бюро переводов</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="styles.css">
 </head>
-<body class="bg-slate-50 font-sans text-slate-800 min-h-screen">
+<body class="admin-page bg-slate-50 font-sans text-slate-800 min-h-screen">
     <div id="navbar-placeholder"></div>
 
-    <main class="max-w-7xl mx-auto px-4 py-8 space-y-12">
+    <main class="app-main max-w-7xl mx-auto px-4 py-8 space-y-12">
         <section class="space-y-6">
-            <div class="border-b border-slate-200 pb-3">
-                <h2 class="text-lg font-bold text-indigo-900 flex items-center gap-2">
-                    <span class="w-2 h-5 bg-indigo-600 rounded"></span>
-                    Управление языками
-                </h2>
-                <p class="text-xs text-slate-500">Добавление и редактирование языковых единиц для последующего выбора в формах</p>
+            <div class="page-heading">
+                <h1 class="page-title">Языки</h1>
+                <p class="text-sm text-slate-500">Ведите реестр языков для шаблонов и услуг перевода.</p>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
+            <div class="workspace-grid grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="panel editor-panel bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
                     <h3 class="font-bold text-slate-800 text-sm" id="form-title">Добавить новый язык</h3>
-                    <form id="lang-form" onsubmit="handleAddLanguage(event)" class="space-y-3">
+                    <form id="lang-form" onsubmit="handleAddLanguage(event)" class="editor-form space-y-3">
                         <div>
-                            <label class="block text-[10px] font-bold text-slate-500 mb-1">Название языка:</label>
+                            <label for="lang-name-input" class="block text-[10px] font-bold text-slate-500 mb-1">Название языка (обязательно):</label>
                             <input type="text" id="lang-name-input" placeholder="Например: Русский" required class="w-full text-xs px-2.5 py-1.5 border border-slate-300 rounded focus:outline-none focus:border-indigo-500">
                         </div>
                         <div>
-                            <label class="block text-[10px] font-bold text-slate-500 mb-1">Двухбуквенный код (ISO):</label>
+                            <label for="lang-code-input" class="block text-[10px] font-bold text-slate-500 mb-1">Двухбуквенный код ISO (обязательно):</label>
                             <input type="text" id="lang-code-input" placeholder="Например: ru" required maxlength="2" class="w-full text-xs px-2.5 py-1.5 border border-slate-300 rounded focus:outline-none focus:border-indigo-500 uppercase">
                         </div>
                         <button type="submit" id="lang-submit-btn" class="w-full py-2 bg-indigo-600 text-white rounded text-xs font-semibold hover:bg-indigo-700 transition">Внести в реестр</button>
                     </form>
                 </div>
 
-                <div class="md:col-span-2 bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col h-[450px]">
+                <div class="panel registry-panel md:col-span-2 bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col">
                     <h3 class="font-bold text-slate-800 text-sm mb-4">Реестр доступных языков</h3>
                     <div id="languages-list" class="flex-1 overflow-y-auto space-y-1.5 pr-1 text-xs">
                         <!-- Список -->
@@ -59,18 +58,18 @@
             let html = '';
             store.languages.forEach(lang => {
                 html += `
-                    <div class="flex items-center justify-between py-1.5 border-b border-slate-100 hover:bg-slate-50 rounded px-2">
+                    <div class="registry-row flex flex-wrap items-center justify-between gap-3 py-1.5 border-b border-slate-100 hover:bg-slate-50 rounded px-2">
                         <span class="font-medium text-slate-700">
                             ${store.escapeHtml(lang.name)} <span class="text-slate-400 text-[10px]">(${store.escapeHtml(lang.code.toUpperCase())})</span>
                         </span>
                         <div class="flex items-center gap-2">
                             <button onclick="startEditLanguage('${lang.id}')" class="text-indigo-600 hover:text-indigo-800 font-semibold px-2">Редактировать</button>
-                            <button onclick="deleteLanguage('${lang.id}')" class="text-rose-500 hover:text-rose-700 font-bold px-1.5">×</button>
+                            <button aria-label="Удалить язык ${store.escapeHtml(lang.name)}" onclick="deleteLanguage('${lang.id}')" class="text-rose-500 hover:text-rose-700 font-bold px-1.5">×</button>
                         </div>
                     </div>
                 `;
             });
-            listContainer.innerHTML = html || '<p class="text-slate-400 italic text-center py-8">Языки не добавлены. База пуста.</p>';
+            listContainer.innerHTML = html || '<p class="empty-state text-slate-500 text-center py-8">Языков пока нет. <a href="#lang-name-input" class="text-indigo-600 underline">Добавьте первый язык</a>, чтобы использовать его в шаблонах и услугах.</p>';
         }
 
         function startEditLanguage(id) {
