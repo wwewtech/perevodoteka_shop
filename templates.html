@@ -12,18 +12,25 @@
 
     <main class="app-main max-w-7xl mx-auto px-4 py-8 space-y-12">
         <section class="space-y-6">
-            <div class="page-heading">
+            <div class="page-heading page-header">
                 <h1 class="page-title">Шаблоны перевода</h1>
                 <p class="text-sm text-slate-500">Сохраняйте языковые пары, стоимость и состав документа для выпуска услуг.</p>
             </div>
 
             <div class="workspace-grid grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <div class="panel registry-panel bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col">
-                    <div class="mb-4 flex justify-between items-center">
-                        <div>
-                            <h3 class="font-bold text-slate-800 text-sm">Список сохраненных шаблонов</h3>
+                    <div class="mb-4 space-y-3">
+                        <div class="flex justify-between items-center gap-2">
+                            <div>
+                                <h3 class="font-bold text-slate-800 text-sm">Список сохраненных шаблонов</h3>
+                                <p class="text-[10px] text-slate-500" id="tpl-count-label">Всего: 0</p>
+                            </div>
+                            <button onclick="handleCreateTemplate()" class="px-2.5 py-1.5 bg-indigo-600 text-white rounded text-xs font-semibold hover:bg-indigo-700 transition">Создать новый</button>
                         </div>
-                        <button onclick="toggleTemplateForm(true)" class="px-2.5 py-1.5 bg-indigo-600 text-white rounded text-xs font-semibold hover:bg-indigo-700 transition">Создать новый</button>
+                        <div>
+                            <label for="tpl-search" class="block text-[10px] font-bold text-slate-500 mb-1">Поиск по шаблонам:</label>
+                            <input type="search" id="tpl-search" placeholder="Название, языки, описание..." autocomplete="off" class="w-full px-2.5 py-1.5 border border-slate-300 rounded focus:border-indigo-500" oninput="renderTemplatesList()">
+                        </div>
                     </div>
 
                     <div id="templates-list" class="flex-1 overflow-y-auto space-y-3 pr-1">
@@ -32,48 +39,55 @@
                 </div>
 
                 <div id="template-editor-wrapper" class="panel editor-panel bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col hidden">
-                    <h3 class="font-bold text-slate-800 text-sm mb-4" id="template-editor-title">Создание нового шаблона схемы</h3>
-                    <form id="template-form" onsubmit="handleTemplateSubmit(event)" class="editor-form space-y-3 text-xs">
-                        <div>
-                            <label for="tpl-name" class="block text-[10px] font-bold text-slate-500 mb-1">Название шаблона (обязательно):</label>
-                            <input type="text" id="tpl-name" placeholder="Например: Перевод паспорта" required class="w-full px-2.5 py-1.5 border border-slate-300 rounded focus:border-indigo-500">
-                        </div>
-                        <div>
-                            <label for="tpl-desc" class="block text-[10px] font-bold text-slate-500 mb-1">Описание (необязательно):</label>
-                            <textarea id="tpl-desc" placeholder="Особенности перевода документа" class="w-full px-2.5 py-1.5 border border-slate-300 rounded focus:border-indigo-500" rows="2"></textarea>
-                        </div>
-                        
-                        <div class="grid grid-cols-2 gap-4">
+                    <header class="panel-header mb-4"><h2 class="font-bold text-lg" id="template-editor-title">Новый шаблон</h2><p id="tpl-snapshot-notice" class="snapshot-notice text-sm text-slate-600 mt-2">Услуги получают копию шаблона. Изменения здесь не обновят опубликованные услуги.</p></header>
+                    <form id="template-form" onsubmit="handleTemplateSubmit(event)" class="editor-form space-y-4 text-xs" autocomplete="off" novalidate>
+                        <fieldset class="editor-section tpl-section border border-slate-200 rounded-lg p-3 space-y-3">
+                            <legend class="px-1 text-[10px] font-bold text-indigo-600 uppercase tracking-wider">1. Документ</legend>
                             <div>
-                                <label for="tpl-source" class="block text-[10px] font-bold text-slate-500 mb-1">Язык оригинала (обязательно):</label>
-                                <select id="tpl-source" required class="w-full px-2.5 py-1.5 border border-slate-300 rounded focus:border-indigo-500">
-                                    <option value="">-- Выберите язык --</option>
-                                </select>
+                                <label for="tpl-name" class="block text-[10px] font-bold text-slate-500 mb-1">Название шаблона (обязательно):</label>
+                                <input type="text" id="tpl-name" name="tpl-name" placeholder="Например: Перевод паспорта" required autocomplete="off" class="w-full px-2.5 py-1.5 border border-slate-300 rounded focus:border-indigo-500">
                             </div>
                             <div>
-                                <label for="tpl-target" class="block text-[10px] font-bold text-slate-500 mb-1">Язык перевода (обязательно):</label>
-                                <select id="tpl-target" required class="w-full px-2.5 py-1.5 border border-slate-300 rounded focus:border-indigo-500">
-                                    <option value="">-- Выберите язык --</option>
-                                </select>
+                                <label for="tpl-desc" class="block text-[10px] font-bold text-slate-500 mb-1">Описание (необязательно):</label>
+                                <textarea id="tpl-desc" name="tpl-desc" placeholder="Особенности перевода документа" autocomplete="off" class="w-full px-2.5 py-1.5 border border-slate-300 rounded focus:border-indigo-500" rows="2"></textarea>
                             </div>
-                        </div>
+                        </fieldset>
 
-                        <div>
-                            <label for="tpl-price" class="block text-[10px] font-bold text-slate-500 mb-1">Базовая стоимость перевода (обязательно):</label>
-                            <input type="number" step="0.01" id="tpl-price" placeholder="Базовая стоимость перевода" required class="w-full px-2.5 py-1.5 border border-slate-300 rounded focus:border-indigo-500">
-                        </div>
-                        
-                        <div class="border-t border-slate-200 pt-3">
-                            <span class="text-[10px] font-bold text-slate-500 block mb-2">Физические компоненты документа:</span>
+                        <fieldset class="editor-section tpl-section border border-slate-200 rounded-lg p-3 space-y-3">
+                            <legend class="px-1 text-[10px] font-bold text-indigo-600 uppercase tracking-wider">2. Перевод</legend>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label for="tpl-source" class="block text-[10px] font-bold text-slate-500 mb-1">Язык оригинала (обязательно):</label>
+                                    <select id="tpl-source" name="tpl-source" required autocomplete="off" class="w-full px-2.5 py-1.5 border border-slate-300 rounded focus:border-indigo-500">
+                                        <option value="">-- Выберите язык --</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label for="tpl-target" class="block text-[10px] font-bold text-slate-500 mb-1">Язык перевода (обязательно):</label>
+                                    <select id="tpl-target" name="tpl-target" required autocomplete="off" class="w-full px-2.5 py-1.5 border border-slate-300 rounded focus:border-indigo-500">
+                                        <option value="">-- Выберите язык --</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div>
+                                <label for="tpl-price" class="block text-[10px] font-bold text-slate-500 mb-1">Базовая стоимость перевода (обязательно):</label>
+                                <input type="number" step="0.01" min="0" id="tpl-price" name="tpl-price" placeholder="0.00" required autocomplete="off" class="w-full px-2.5 py-1.5 border border-slate-300 rounded focus:border-indigo-500" oninput="updateTemplatePriceSummary()">
+                            </div>
+                            <div id="tpl-price-summary" role="status" aria-live="polite" class="price-summary bg-indigo-50 border border-indigo-100 rounded px-2.5 py-1.5 text-[11px] text-indigo-700 font-semibold"></div>
+                        </fieldset>
+
+                        <fieldset class="editor-section tpl-section border border-slate-200 rounded-lg p-3 space-y-2">
+                            <legend class="px-1 text-[10px] font-bold text-indigo-600 uppercase tracking-wider">3. Компоненты документа</legend>
                             <div id="tpl-components-container" class="space-y-2">
                                 <!-- Строки компонентов -->
                             </div>
-                            <button type="button" onclick="addTemplateComponentRow()" class="mt-2 text-[10px] text-indigo-600 hover:text-indigo-800 font-semibold flex items-center gap-1">+ Добавить часть документа</button>
-                        </div>
+                            <p class="text-[10px] text-slate-400">Цена услуги = базовая стоимость + цены обязательных компонентов. Необязательные компоненты оплачиваются по выбору клиента.</p>
+                            <button type="button" onclick="addTemplateComponentRow()" class="mt-1 text-[10px] text-indigo-600 hover:text-indigo-800 font-semibold flex items-center gap-1">+ Добавить часть документа</button>
+                        </fieldset>
 
                         <div class="flex gap-2 justify-end pt-2">
-                            <button type="button" onclick="toggleTemplateForm(false)" class="px-3 py-1.5 bg-slate-200 text-slate-700 rounded text-xs font-semibold">Отмена</button>
-                            <button type="submit" id="tpl-submit-btn" class="px-3 py-1.5 bg-indigo-600 text-white rounded text-xs font-semibold">Сохранить</button>
+                            <button type="button" onclick="handleCancelTemplateForm()" class="px-3 py-1.5 bg-slate-200 text-slate-700 rounded text-xs font-semibold">Отмена</button>
+                            <button type="submit" id="tpl-submit-btn" class="px-3 py-1.5 bg-indigo-600 text-white rounded text-xs font-semibold">Сохранить шаблон</button>
                         </div>
                     </form>
                 </div>
@@ -83,47 +97,101 @@
 
     <script src="store.js"></script>
     <script src="nav.js"></script>
+    <script src="ui.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             renderNavbar('nav-templates');
             refreshUI();
+            UX.markClean('template-form');
         });
 
         let tplComponents = [];
         let editingTemplateId = null;
 
-        function toggleTemplateForm(show) {
-            const formWrapper = document.getElementById("template-editor-wrapper");
-            if (show) {
-                if (store.languages.length === 0) {
-                    alert("Реестр языков пуст! Добавьте языки на странице 'Языки' перед созданием шаблонов.");
-                    return;
-                }
-                formWrapper.classList.remove("hidden");
-                document.getElementById("template-form").reset();
-                document.getElementById("template-editor-title").textContent = "Создание нового шаблона схемы";
-                document.getElementById("tpl-submit-btn").textContent = "Сохранить шаблон";
-                tplComponents = [];
-                renderTemplateComponentsEditor();
-                addTemplateComponentRow();
-                editingTemplateId = null;
-            } else {
-                formWrapper.classList.add("hidden");
-                editingTemplateId = null;
+        function templateFormVisible() {
+            return !document.getElementById("template-editor-wrapper").classList.contains("hidden");
+        }
+
+        async function handleCreateTemplate() {
+            if (store.languages.length === 0) {
+                UX.toast("Реестр языков пуст! Добавьте языки на странице «Языки» перед созданием шаблонов.");
+                return;
             }
+            if (templateFormVisible() && !(await UX.discard('template-form'))) return;
+            openTemplateForm(null);
+        }
+
+        function openTemplateForm(templateId) {
+            editingTemplateId = templateId;
+            const form = document.getElementById("template-form");
+            form.reset();
+            document.getElementById("template-editor-wrapper").classList.remove("hidden");
+            document.getElementById("template-editor-title").textContent = templateId ? "Редактирование шаблона схемы" : "Создание нового шаблона схемы";
+            document.getElementById("tpl-submit-btn").textContent = templateId ? "Сохранить изменения" : "Сохранить шаблон";
+            document.getElementById('tpl-snapshot-notice').textContent = 'Услуги получают копию шаблона. Изменения здесь не обновят опубликованные услуги. Используют шаблон: ' + store.categories.filter(c => c.isProduct && c.templateId === templateId).length + '.';
+            tplComponents = [];
+            renderTemplateComponentsEditor();
+            if (templateId) {
+                const t = store.templates.find(tpl => tpl.id === templateId);
+                if (t) {
+                    document.getElementById("tpl-name").value = t.name;
+                    document.getElementById("tpl-desc").value = t.description || "";
+                    setTemplateSelect('tpl-source', t.sourceLang || '');
+                    setTemplateSelect('tpl-target', t.targetLang || '');
+                    document.getElementById("tpl-price").value = t.basePrice;
+                    tplComponents = JSON.parse(JSON.stringify(t.components || []));
+                    renderTemplateComponentsEditor();
+                }
+            }
+            UX.sync();
+            updateTemplatePriceSummary();
+            UX.markClean(form);
+            document.getElementById("tpl-name").focus();
+        }
+
+        async function handleCancelTemplateForm() {
+            if (!(await UX.discard('template-form'))) return;
+            closeTemplateForm();
+        }
+
+        function closeTemplateForm() {
+            document.getElementById("template-editor-wrapper").classList.add("hidden");
+            document.getElementById("template-form").reset();
+            tplComponents = [];
+            renderTemplateComponentsEditor();
+            editingTemplateId = null;
+            UX.sync();
+            UX.markClean('template-form');
+            document.querySelector('[onclick="handleCreateTemplate()"]')?.focus();
+        }
+
+        function updateTemplatePriceSummary() {
+            const input = document.getElementById('tpl-price');
+            const base = Number(input.value);
+            const summary = document.getElementById('tpl-price-summary');
+            const prices = tplComponents.map(c => Number(c.additionalPrice));
+            if (!input.value || !Number.isFinite(base) || base < 0 || prices.some(p => !Number.isFinite(p) || p < 0)) {
+                summary.textContent = 'Укажите корректную базовую стоимость и доплаты для расчёта.';
+                return;
+            }
+            const required = tplComponents.reduce((sum, c, i) => sum + (c.isRequired ? prices[i] : 0), 0);
+            const optional = tplComponents.reduce((sum, c, i) => sum + (!c.isRequired ? prices[i] : 0), 0);
+            summary.textContent = 'База: ' + UX.formatPrice(base) + ' · Обязательные: ' + UX.formatPrice(required) +
+                ' · Минимум: ' + UX.formatPrice(base + required) +
+                (optional > 0 ? ' · Со всеми дополнительными: ' + UX.formatPrice(base + required + optional) : ' · Дополнительные компоненты не увеличивают цену.');
         }
 
         function renderTemplateComponentsEditor() {
             const container = document.getElementById("tpl-components-container");
             if (!container) return;
             container.innerHTML = '';
-            tplComponents.forEach(comp => {
+            tplComponents.forEach((comp, idx) => {
                 const rowHtml = `
                     <div class="component-editor-row grid items-center gap-2 p-2 bg-slate-50 border border-slate-200 rounded text-[11px]" id="row-${comp.id}">
-                        <input type="text" aria-label="Название компонента (обязательно)" placeholder="Название части" required value="${store.escapeHtml(comp.name)}" class="tpl-comp-name min-w-0 w-full px-1.5 py-1 border border-slate-300 rounded focus:outline-none" oninput="updateTemplateComponent('${comp.id}', 'name', this.value)">
-                        <input type="number" aria-label="Дополнительная стоимость компонента (необязательно)" step="0.01" placeholder="Доп. цена" value="${comp.additionalPrice || ''}" class="tpl-comp-price min-w-0 w-full px-1 py-1 border border-slate-300 rounded focus:outline-none" oninput="updateTemplateComponent('${comp.id}', 'additionalPrice', parseFloat(this.value) || 0)">
+                        <label class="component-field text-sm">Название части<input id="tpl-comp-name-${comp.id}" name="tpl-comp-name-${comp.id}" required type="text" aria-label="Название компонента (обязательно)" placeholder="Название части" autocomplete="off" value="${store.escapeHtml(comp.name)}" class="tpl-comp-name min-w-0 w-full px-1.5 py-1 border border-slate-300 rounded focus:outline-none" oninput="updateTemplateComponent('${comp.id}', 'name', this.value)"></label>
+                        <label class="component-field text-sm">Доплата, ₽<input id="tpl-comp-price-${comp.id}" name="tpl-comp-price-${comp.id}" type="number" aria-label="Дополнительная стоимость компонента (необязательно)" step="0.01" min="0" placeholder="Доп. цена" value="${store.escapeHtml(String(comp.additionalPrice ?? ''))}" class="tpl-comp-price min-w-0 w-full px-1 py-1 border border-slate-300 rounded focus:outline-none" oninput="updateTemplateComponent('${comp.id}', 'additionalPrice', this.validity.badInput ? 'invalid' : this.value); updateTemplatePriceSummary()"></label>
                         <label for="tpl-comp-required-${comp.id}" class="flex items-center gap-1 select-none">
-                            <input id="tpl-comp-required-${comp.id}" type="checkbox" ${comp.isRequired ? 'checked' : ''} class="tpl-comp-req h-3 w-3 text-indigo-600 border-slate-300 rounded" onchange="updateTemplateComponent('${comp.id}', 'isRequired', this.checked)">
+                            <input id="tpl-comp-required-${comp.id}" type="checkbox" ${comp.isRequired ? 'checked' : ''} class="tpl-comp-req h-3 w-3 text-indigo-600 border-slate-300 rounded" onchange="updateTemplateComponent('${comp.id}', 'isRequired', this.checked); updateTemplatePriceSummary()">
                             <span class="text-[10px]">Обязательный</span>
                         </label>
                         <button type="button" aria-label="Удалить компонент" onclick="removeTemplateComponentRow('${comp.id}')" class="text-rose-500 hover:text-rose-700 font-bold px-1">×</button>
@@ -131,11 +199,18 @@
                 `;
                 container.insertAdjacentHTML('beforeend', rowHtml);
             });
+            updateTemplatePriceSummary();
         }
 
         function addTemplateComponentRow() {
-            tplComponents.push({ id: store.generateUniqueId("comp"), name: "", isRequired: false, additionalPrice: 0 });
+            const comp = { id: store.generateUniqueId("comp"), name: "", isRequired: false, additionalPrice: 0 };
+            tplComponents.push(comp);
             renderTemplateComponentsEditor();
+            const row = document.getElementById("row-" + comp.id);
+            if (row) {
+                const nameInput = row.querySelector(".tpl-comp-name");
+                if (nameInput) nameInput.focus();
+            }
         }
 
         function updateTemplateComponent(id, field, value) {
@@ -144,123 +219,212 @@
         }
 
         function removeTemplateComponentRow(id) {
+            const idx = tplComponents.findIndex(c => c.id === id);
             tplComponents = tplComponents.filter(c => c.id !== id);
             renderTemplateComponentsEditor();
+            const next = tplComponents[Math.min(idx, tplComponents.length - 1)];
+            if (!next) document.querySelector('[onclick="addTemplateComponentRow()"]')?.focus();
+            if (next) {
+                const row = document.getElementById("row-" + next.id);
+                if (row) {
+                    const nameInput = row.querySelector(".tpl-comp-name");
+                    if (nameInput) nameInput.focus();
+                }
+            }
         }
 
-        function startEditTemplate(id) {
-            const t = store.templates.find(tpl => tpl.id === id);
-            if (!t) return;
-
-            editingTemplateId = id;
-            document.getElementById("template-editor-wrapper").classList.remove("hidden");
-            document.getElementById("template-editor-title").textContent = "Редактирование шаблона схемы";
-            document.getElementById("tpl-submit-btn").textContent = "Сохранить изменения";
-
-            document.getElementById("tpl-name").value = t.name;
-            document.getElementById("tpl-desc").value = t.description;
-            document.getElementById("tpl-source").value = t.sourceLang;
-            document.getElementById("tpl-target").value = t.targetLang;
-            document.getElementById("tpl-price").value = t.basePrice;
-
-            tplComponents = JSON.parse(JSON.stringify(t.components));
-            renderTemplateComponentsEditor();
+        function validateTemplateComponents() {
+            let valid = true;
+            let firstRow = null;
+            tplComponents.forEach(comp => {
+                const row = document.getElementById("row-" + comp.id);
+                if (!row) return;
+                const nameInput = row.querySelector(".tpl-comp-name");
+                const priceInput = row.querySelector(".tpl-comp-price");
+                const name = (comp.name || "").trim();
+                const priceRaw = String(comp.additionalPrice ?? '').trim();
+                const price = Number(priceRaw);
+                if (!name) {
+                    UX.error(nameInput, "Укажите название компонента или удалите строку.");
+                    valid = false;
+                    if (!firstRow) firstRow = nameInput;
+                } else if (!isFinite(price) || price < 0) {
+                    UX.error(priceInput, "Цена должна быть числом ≥ 0.");
+                    valid = false;
+                    if (!firstRow) firstRow = priceInput;
+                }
+            });
+            return { valid, firstRow };
         }
 
         function handleTemplateSubmit(e) {
             e.preventDefault();
-            const name = document.getElementById("tpl-name").value.trim();
-            const desc = document.getElementById("tpl-desc").value.trim();
-            const sourceLang = document.getElementById("tpl-source").value;
-            const targetLang = document.getElementById("tpl-target").value;
-            const basePrice = parseFloat(document.getElementById("tpl-price").value) || 0;
+            const form = document.getElementById("template-form");
+            const nameInput = document.getElementById("tpl-name");
+            const sourceSel = document.getElementById("tpl-source");
+            const targetSel = document.getElementById("tpl-target");
+            const priceInput = document.getElementById("tpl-price");
 
-            const savedComponents = tplComponents.filter(c => c.name.trim() !== '');
+            if (!nameInput.value.trim()) { UX.error(nameInput, "Введите название шаблона."); return; }
+            if (!sourceSel.value) { UX.error(sourceSel, "Выберите язык оригинала."); return; }
+            if (!targetSel.value) { UX.error(targetSel, "Выберите язык перевода."); return; }
+            if (sourceSel.value === targetSel.value) { UX.error(targetSel, "Язык перевода не должен совпадать с языком оригинала."); return; }
+            const basePrice = parseFloat(priceInput.value);
+            if (!isFinite(basePrice) || basePrice < 0) { UX.error(priceInput, "Стоимость должна быть числом ≥ 0."); return; }
+
+            const compCheck = validateTemplateComponents();
+            if (!compCheck.valid) {
+                if (compCheck.firstRow) compCheck.firstRow.focus();
+                UX.toast("Исправьте ошибки в компонентах документа.");
+                return;
+            }
+
+            const savedComponents = tplComponents.map(c => ({
+                id: c.id,
+                name: (c.name || "").trim(),
+                isRequired: !!c.isRequired,
+                additionalPrice: isFinite(parseFloat(c.additionalPrice)) ? parseFloat(c.additionalPrice) : 0
+            }));
 
             if (editingTemplateId) {
                 const t = store.templates.find(tpl => tpl.id === editingTemplateId);
                 if (t) {
-                    t.name = name;
-                    t.description = desc;
-                    t.sourceLang = sourceLang;
-                    t.targetLang = targetLang;
+                    t.name = nameInput.value.trim();
+                    t.description = document.getElementById("tpl-desc").value.trim();
+                    t.sourceLang = sourceSel.value;
+                    t.targetLang = targetSel.value;
                     t.basePrice = basePrice;
                     t.components = savedComponents;
                     store.saveTemplates();
                 }
-                editingTemplateId = null;
             } else {
                 store.templates.push({
                     id: store.generateUniqueId("tpl"),
-                    name, description: desc, sourceLang, targetLang, basePrice,
+                    name: nameInput.value.trim(),
+                    description: document.getElementById("tpl-desc").value.trim(),
+                    sourceLang: sourceSel.value,
+                    targetLang: targetSel.value,
+                    basePrice,
                     components: savedComponents
                 });
                 store.saveTemplates();
             }
 
-            toggleTemplateForm(false);
+            UX.toast("Шаблон сохранён.");
+            closeTemplateForm();
             refreshUI();
         }
 
-        function deleteTemplate(id) {
-            if (store.products.some(p => p.templateId === id)) {
-                alert("Ошибка удаления: Данный шаблон используется в выпущенных товарах.");
+        async function startEditTemplate(id) {
+            if (templateFormVisible() && !(await UX.discard('template-form'))) return;
+            openTemplateForm(id);
+        }
+
+        async function deleteTemplate(id) {
+            const t = store.templates.find(tpl => tpl.id === id);
+            if (!t) return;
+            const usedCount = store.categories.filter(c => c.isProduct && c.templateId === id).length;
+            if (usedCount > 0) {
+                UX.toast("Ошибка удаления: шаблон используется в " + usedCount + " выпущенных услугах.");
                 return;
             }
-            store.templates = store.templates.filter(t => t.id !== id);
+            const ok = await UX.confirm({
+                title: "Удаление шаблона",
+                message: "Удалить шаблон «" + t.name + "»? Действие нельзя отменить.",
+                confirmText: "Удалить",
+                danger: true
+            });
+            if (!ok) return;
+            if (editingTemplateId === id && !(await UX.discard('template-form'))) return;
+            if (editingTemplateId === id) closeTemplateForm();
+            store.templates = store.templates.filter(x => x.id !== id);
             store.saveTemplates();
+            UX.toast("Шаблон удалён.");
             refreshUI();
         }
 
         function renderTemplatesList() {
             const container = document.getElementById("templates-list");
-            let html = '';
+            const query = (document.getElementById("tpl-search").value || "").trim().toLowerCase();
 
-            store.templates.forEach(t => {
+            const filtered = store.templates.filter(t => {
+                if (!query) return true;
+                const sName = store.languages.find(l => l.code === t.sourceLang)?.name || "";
+                const tName = store.languages.find(l => l.code === t.targetLang)?.name || "";
+                const haystack = [t.name, t.description, sName, tName, t.sourceLang, t.targetLang].join(" ").toLowerCase();
+                return haystack.includes(query);
+            });
+
+            document.getElementById("tpl-count-label").textContent = query
+                ? "Найдено: " + filtered.length + " из " + store.templates.length
+                : "Всего: " + store.templates.length;
+
+            let html = '';
+            filtered.forEach(t => {
                 const sName = store.languages.find(l => l.code === t.sourceLang)?.name || t.sourceLang.toUpperCase();
                 const tName = store.languages.find(l => l.code === t.targetLang)?.name || t.targetLang.toUpperCase();
-
                 html += `
                     <div class="template-card bg-slate-50 p-3 rounded-lg border border-slate-200 text-xs flex flex-col justify-between">
                         <div class="flex flex-wrap justify-between items-start gap-3">
                             <div>
                                 <span class="font-bold text-slate-800">${store.escapeHtml(t.name)}</span>
-                                <span class="text-[10px] text-indigo-600 block">${store.escapeHtml(sName)} → ${store.escapeHtml(tName)} | Базовая стоимость: ${t.basePrice}</span>
+                                <span class="text-[10px] text-indigo-600 block">${store.escapeHtml(sName)} → ${store.escapeHtml(tName)} | Базовая стоимость: ${UX.formatPrice(t.basePrice)}</span>
                             </div>
                             <div class="flex flex-wrap items-center gap-2">
                                 <button onclick="startEditTemplate('${t.id}')" class="text-indigo-600 hover:text-indigo-800 font-semibold px-1">Редактировать</button>
                                 <button onclick="deleteTemplate('${t.id}')" class="text-rose-500 hover:text-rose-700 font-bold px-1">Удалить</button>
                             </div>
                         </div>
+                        <p class="usage-count text-sm text-slate-600 mt-2">Используют услуги: ${store.categories.filter(c => c.isProduct && c.templateId === t.id).length}</p>
                         <p class="text-slate-500 text-[10px] mt-1 italic">${store.escapeHtml(t.description) || 'Без описания'}</p>
                         <div class="mt-2 bg-white p-1.5 rounded border border-slate-150 space-y-1">
-                            ${t.components.map(c => `
+                            ${(t.components || []).map(c => `
                                 <div class="flex justify-between text-[9px] text-slate-600">
                                     <span>${c.isRequired ? 'Обязательный:' : 'Необязательный:'} ${store.escapeHtml(c.name)}</span>
-                                    <span>${c.additionalPrice > 0 ? '+' + c.additionalPrice : 'В базовой стоимости'}</span>
+                                    <span>${c.additionalPrice > 0 ? '+' + UX.formatPrice(c.additionalPrice) : 'В базовой стоимости'}</span>
                                 </div>
-                            `).join('')}
+                            `).join('') || '<div class="text-[9px] text-slate-400 italic">Компоненты не заданы</div>'}
                         </div>
                     </div>
                 `;
             });
 
-            container.innerHTML = html || '<div class="empty-state text-slate-500 text-center py-8"><p>Шаблонов пока нет. Сохраните языковую пару, стоимость и компоненты документа.</p><button type="button" onclick="toggleTemplateForm(true)" class="mt-3 text-indigo-600 underline">Создать первый шаблон</button><p class="mt-2">Сначала добавьте нужные <a href="languages.html" class="text-indigo-600 underline">языки перевода</a>.</p></div>';
+            container.innerHTML = html || (store.templates.length
+                ? '<div class="empty-state text-slate-500 text-center py-8"><p>По запросу ничего не найдено.</p></div>'
+                : '<div class="empty-state text-slate-500 text-center py-8"><p>Шаблонов пока нет. Сохраните языковую пару, стоимость и компоненты документа.</p><button type="button" onclick="handleCreateTemplate()" class="mt-3 text-indigo-600 underline">Создать первый шаблон</button><p class="mt-2">Сначала добавьте нужные <a href="languages.html" class="text-indigo-600 underline">языки перевода</a>.</p></div>');
+        }
+
+        function setTemplateSelect(id, value) {
+            const select = document.getElementById(id);
+            if (value && !Array.from(select.options).some(option => option.value === value)) {
+                select.add(new Option(value + ' (нет в реестре)', value));
+            }
+            select.value = value;
+        }
+
+        function toggleTemplateForm(show) {
+            return show ? handleCreateTemplate() : handleCancelTemplateForm();
         }
 
         function updateTemplateLanguageSelectors() {
+            const source = document.getElementById("tpl-source");
+            const target = document.getElementById("tpl-target");
+            const prevSource = source.value;
+            const prevTarget = target.value;
             let optionsHtml = '<option value="">-- Выберите язык --</option>';
             store.languages.forEach(l => {
                 optionsHtml += `<option value="${l.code}">${store.escapeHtml(l.name)} (${store.escapeHtml(l.code.toUpperCase())})</option>`;
             });
-            document.getElementById("tpl-source").innerHTML = optionsHtml;
-            document.getElementById("tpl-target").innerHTML = optionsHtml;
+            source.innerHTML = optionsHtml;
+            target.innerHTML = optionsHtml;
+            setTemplateSelect(source.id, prevSource);
+            setTemplateSelect(target.id, prevTarget);
+            UX.sync();
         }
 
         function refreshUI() {
             renderTemplatesList();
             updateTemplateLanguageSelectors();
-            renderTemplateComponentsEditor();
         }
     </script>
 </body>

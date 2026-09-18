@@ -13,37 +13,42 @@
         <section>
             <div class="page-heading catalog-heading">
                 <div>
-                    <h1 class="page-title">Точный перевод.<br>Понятная стоимость.</h1>
+                    <h1 class="page-title">Каталог переводов</h1>
                     <p>Выберите документ и языки перевода. Добавьте нужные части — стоимость рассчитается сразу.</p>
                 </div>
                 <a class="primary-link" href="products_admin.html">Настроить услугу <span aria-hidden="true">↗</span></a>
             </div>
             <div class="catalog-layout">
                 <aside class="catalog-filters" aria-label="Фильтры каталога">
-                    <div class="filter-section">
-                        <h2 class="filter-heading">Категории документов</h2>
-                        <div id="catalog-category-filter-tree"></div>
-                    </div>
-                    <div class="filter-section">
-                        <h2 class="filter-heading">Направление перевода</h2>
-                        <div class="filter-language-pair">
-                            <div>
-                                <label for="filter-lang-source">С какого языка</label>
-                                <select id="filter-lang-source" onchange="renderProductsCatalog()"><option value="">Все языки</option></select>
-                            </div>
-                            <div>
-                                <label for="filter-lang-target">На какой язык</label>
-                                <select id="filter-lang-target" onchange="renderProductsCatalog()"><option value="">Все языки</option></select>
-                            </div>
+                    <details id="catalog-filter-disclosure" class="filter-disclosure" open>
+                        <summary class="filter-summary">Фильтры <span id="catalog-filter-count"></span></summary>
+                        <div class="filter-section">
+                            <h2 class="filter-heading">Категории документов</h2>
+                            <label for="catalog-category-search">Найти категорию</label>
+                            <input type="search" id="catalog-category-search" class="category-search" oninput="renderCatalogCategoryFilterTree()" placeholder="Название или путь категории" aria-controls="catalog-category-filter-tree">
+                            <div id="catalog-category-filter-tree" class="category-tree-scroll max-h-80 overflow-y-auto"></div>
                         </div>
-                    </div>
-                    <button type="button" class="reset-filters" onclick="resetCatalogFilters()">Сбросить фильтры</button>
+                        <div class="filter-section">
+                            <h2 class="filter-heading">Направление перевода</h2>
+                            <div class="filter-language-pair">
+                                <div>
+                                    <label for="filter-lang-source">С какого языка</label>
+                                    <select id="filter-lang-source" onchange="renderProductsCatalog()"><option value="">Все языки</option></select>
+                                </div>
+                                <div>
+                                    <label for="filter-lang-target">На какой язык</label>
+                                    <select id="filter-lang-target" onchange="renderProductsCatalog()"><option value="">Все языки</option></select>
+                                </div>
+                            </div>
+                            <button type="button" id="catalog-swap-direction" class="direction-swap" onclick="swapCatalogDirection()" disabled>Поменять языки местами</button>
+                        </div>
+                    </details>
                 </aside>
                 <div class="catalog-content">
                     <div class="catalog-toolbar">
                         <div class="catalog-search-field">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg>
-                            <input type="search" id="catalog-search" oninput="renderProductsCatalog()" placeholder="Найти документ или услугу" aria-label="Поиск по названию или описанию">
+                            <input type="search" id="catalog-search" oninput="scheduleCatalogSearch()" placeholder="Найти документ или услугу" aria-label="Поиск по названию или описанию">
                         </div>
                         <div class="catalog-sort-field">
                             <label for="catalog-sort">Сортировать</label>
@@ -51,6 +56,7 @@
                                 <option value="price_asc">Сначала дешевле</option>
                                 <option value="price_desc">Сначала дороже</option>
                                 <option value="name_asc">По названию: А–Я</option>
+                                <option value="name_desc">По названию: Я–А</option>
                             </select>
                         </div>
                     </div>
@@ -58,6 +64,8 @@
                         <nav id="catalog-breadcrumbs" aria-label="Путь категории"></nav>
                         <span id="catalog-count" role="status" aria-live="polite"></span>
                     </div>
+                    <div id="catalog-active-filters" class="active-filters" aria-label="Выбранные фильтры" hidden></div>
+                    <button type="button" id="catalog-reset" class="reset-filters" onclick="resetCatalogFilters()" hidden>Сбросить фильтры</button>
                     <div id="catalog-grid" class="catalog-grid"></div>
                 </div>
             </div>
@@ -65,41 +73,173 @@
     </main>
     <script src="store.js"></script>
     <script src="nav.js"></script>
+    <script src="ui.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             renderNavbar('nav-catalog');
-            refreshUI();
+            const mobile = window.matchMedia('(max-width: 600px)');
+            const disclosure = document.getElementById('catalog-filter-disclosure');
+            disclosure.open = !mobile.matches;
+            mobile.addEventListener('change', event => {
+                if (event.matches && disclosure.contains(document.activeElement)) disclosure.querySelector('summary').focus();
+                disclosure.open = !event.matches;
+            });
+            updateLanguageFilters();
+            readCatalogQuery();
         });
 
         let selectedCategoryFilterId = null;
-        const priceFormatter = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 2 });
+        let catalogSearchTimer;
+        const componentSelections = new Map();
+        const priceFormatter = { format: value => UX.formatPrice(value) };
+
+        function scheduleCatalogSearch() {
+            clearTimeout(catalogSearchTimer);
+            catalogSearchTimer = setTimeout(renderProductsCatalog, 200);
+        }
+
+        function selectKnownValue(id, value, fallback = '') {
+            const select = document.getElementById(id);
+            select.value = [...select.options].some(option => option.value === value) ? value : fallback;
+        }
+
+        function readCatalogQuery() {
+            clearTimeout(catalogSearchTimer);
+            const params = new URLSearchParams(window.location.search);
+            document.getElementById('catalog-search').value = params.get('q') || '';
+            const category = params.get('category');
+            selectedCategoryFilterId = store.categories.some(c => c.id === category) ? category : null;
+            document.getElementById('catalog-category-search').value = '';
+            selectKnownValue('filter-lang-source', params.get('source'));
+            selectKnownValue('filter-lang-target', params.get('target'));
+            selectKnownValue('catalog-sort', params.get('sort'), 'price_asc');
+            renderCatalogCategoryFilterTree();
+            renderProductsCatalog();
+        }
+
+        window.addEventListener('popstate', readCatalogQuery);
+
+        function writeCatalogQuery() {
+            const url = new URL(window.location.href);
+            const values = {
+                q: document.getElementById('catalog-search').value.trim(),
+                category: selectedCategoryFilterId,
+                source: document.getElementById('filter-lang-source').value,
+                target: document.getElementById('filter-lang-target').value,
+                sort: document.getElementById('catalog-sort').value
+            };
+            Object.entries(values).forEach(([key, value]) => {
+                if (value && !(key === 'sort' && value === 'price_asc')) url.searchParams.set(key, value);
+                else url.searchParams.delete(key);
+            });
+            if (url.href !== window.location.href) window.history.replaceState(window.history.state, '', url.href);
+        }
+
+        function getCategoryFullPath(id) {
+            return store.getCategoryPathIds(id).map(pathId => store.categories.find(c => c.id === pathId)?.name).filter(Boolean).join(' / ');
+        }
+
+        function getLanguageName(code) {
+            return store.languages.find(l => l.code === code)?.name || String(code || '').toUpperCase();
+        }
+
+        function canSwapCatalogDirection() {
+            const source = document.getElementById('filter-lang-source');
+            const target = document.getElementById('filter-lang-target');
+            return source.value !== target.value && [...source.options].some(o => o.value === target.value) && [...target.options].some(o => o.value === source.value);
+        }
+
+        function swapCatalogDirection() {
+            if (!canSwapCatalogDirection()) return;
+            const source = document.getElementById('filter-lang-source');
+            const target = document.getElementById('filter-lang-target');
+            [source.value, target.value] = [target.value, source.value];
+            renderProductsCatalog();
+            UX.toast('Языки перевода поменяны местами');
+        }
+
+        function renderActiveFilters(resultCount) {
+            const filters = [];
+            const search = document.getElementById('catalog-search').value.trim();
+            const source = document.getElementById('filter-lang-source').value;
+            const target = document.getElementById('filter-lang-target').value;
+            if (search) filters.push(['q', `Поиск: ${search}`]);
+            if (selectedCategoryFilterId) filters.push(['category', getCategoryFullPath(selectedCategoryFilterId)]);
+            if (source) filters.push(['source', `С языка: ${getLanguageName(source)}`]);
+            if (target) filters.push(['target', `На язык: ${getLanguageName(target)}`]);
+            const container = document.getElementById('catalog-active-filters');
+            container.hidden = !filters.length;
+            container.innerHTML = filters.map(([key, label]) => `<button type="button" class="filter-chip" data-filter="${key}" onclick="removeCatalogFilter(this.dataset.filter)" aria-label="${store.escapeHtml(`Убрать фильтр: ${label}`)}">${store.escapeHtml(label)} <span aria-hidden="true">×</span></button>`).join('');
+            document.getElementById('catalog-filter-count').textContent = filters.length ? `(${filters.length})` : '';
+            document.getElementById('catalog-reset').hidden = !resultCount || (!filters.length && document.getElementById('catalog-sort').value === 'price_asc');
+            document.getElementById('catalog-swap-direction').disabled = !canSwapCatalogDirection();
+        }
+
+        function removeCatalogFilter(key) {
+            const container = document.getElementById('catalog-active-filters');
+            const buttons = [...container.querySelectorAll('button')];
+            const index = buttons.indexOf(document.activeElement);
+            const fields = { q: 'catalog-search', source: 'filter-lang-source', target: 'filter-lang-target' };
+            if (key === 'category') {
+                selectedCategoryFilterId = null;
+                renderCatalogCategoryFilterTree();
+            } else if (fields[key]) document.getElementById(fields[key]).value = '';
+            renderProductsCatalog();
+            const next = container.querySelectorAll('button');
+            (next[Math.min(Math.max(index, 0), next.length - 1)] || document.getElementById('catalog-search')).focus();
+        }
+
+        function priceInCents(value) {
+            const number = Number(value);
+            return Number.isFinite(number) ? Math.round(number * 100) : 0;
+        }
+
+        function getProductPrice(product, includeOptional = true) {
+            const selected = componentSelections.get(product.id);
+            return (priceInCents(product.basePrice) + product.components.reduce((total, component) => total + (component.isRequired || (includeOptional && selected?.get(component.id)) ? priceInCents(component.additionalPrice) : 0), 0)) / 100;
+        }
 
         function renderCatalogCategoryFilterTree(parentId = null, depth = 0) {
-            const list = store.categories.filter(c => c.parentId === parentId);
-            let html = '';
-            if (parentId === null) {
-                html += `<button type="button" onclick="setCategoryFilter(null)" class="category-filter${selectedCategoryFilterId === null ? ' is-selected' : ''}" aria-pressed="${selectedCategoryFilterId === null}">Все категории</button>`;
-            }
-            list.forEach(c => {
-                const isSelected = selectedCategoryFilterId === c.id;
-                html += `<button type="button" onclick="setCategoryFilter('${c.id}')" class="category-filter${isSelected ? ' is-selected' : ''}" style="--indent: ${Math.min(depth, 5) * 10}px" aria-pressed="${isSelected}">${store.escapeHtml(c.name)}</button>`;
-                html += renderCatalogCategoryFilterTree(c.id, depth + 1);
+            const query = document.getElementById('catalog-category-search').value.trim().toLowerCase();
+            const counts = new Map();
+            store.products.forEach(product => new Set(product.categoryPathIds).forEach(id => counts.set(id, (counts.get(id) || 0) + 1)));
+            const children = new Map();
+            store.categories.forEach(category => {
+                const key = category.parentId || null;
+                if (!children.has(key)) children.set(key, []);
+                children.get(key).push(category);
             });
+            const visited = new Set();
+            const renderBranch = (id, level) => (children.get(id) || []).map(c => {
+                if (visited.has(c.id)) return '';
+                visited.add(c.id);
+                const path = getCategoryFullPath(c.id);
+                const isSelected = selectedCategoryFilterId === c.id;
+                const visible = (!c.isProduct || children.has(c.id) || isSelected) && (!query || path.toLowerCase().includes(query) || isSelected);
+                return (visible ? `<button type="button" data-category-id="${store.escapeHtml(c.id)}" onclick="setCategoryFilter(this.dataset.categoryId)" class="category-filter${isSelected ? ' is-selected' : ''}" style="--indent: ${Math.min(level, 5) * 10}px" aria-pressed="${isSelected}" title="${store.escapeHtml(path)}"><span>${store.escapeHtml(query ? path : c.name)}</span><span class="category-count" aria-label="Услуг: ${counts.get(c.id) || 0}">${counts.get(c.id) || 0}</span></button>` : '') + renderBranch(c.id, level + 1);
+            }).join('');
+            let html = renderBranch(parentId, depth);
             if (parentId === null) {
+                if (!html) html = `<p class="category-search-empty">${query ? 'Категории не найдены' : 'Отдельных разделов пока нет'}</p>`;
+                html = `<button type="button" onclick="setCategoryFilter(null)" class="category-filter${selectedCategoryFilterId === null ? ' is-selected' : ''}" aria-pressed="${selectedCategoryFilterId === null}"><span>Все категории</span><span class="category-count" aria-label="Услуг: ${store.products.length}">${store.products.length}</span></button>` + html;
                 document.getElementById('catalog-category-filter-tree').innerHTML = html;
             }
             return html;
         }
 
         function setCategoryFilter(id) {
-            const restoreFocus = document.getElementById('catalog-category-filter-tree').contains(document.activeElement);
-            selectedCategoryFilterId = id;
+            const treeFocus = document.getElementById('catalog-category-filter-tree').contains(document.activeElement);
+            const breadcrumbFocus = document.getElementById('catalog-breadcrumbs').contains(document.activeElement);
+            selectedCategoryFilterId = store.categories.some(c => c.id === id) ? id : null;
             renderCatalogCategoryFilterTree();
             renderProductsCatalog();
-            if (restoreFocus) document.querySelector('.category-filter.is-selected')?.focus();
+            if (treeFocus) document.querySelector('.category-filter.is-selected')?.focus();
+            if (breadcrumbFocus) (document.querySelector('#catalog-breadcrumbs [aria-current]') || document.getElementById('catalog-search')).focus();
         }
 
         function resetCatalogFilters() {
+            clearTimeout(catalogSearchTimer);
+            document.getElementById('catalog-category-search').value = '';
             selectedCategoryFilterId = null;
             document.getElementById('catalog-search').value = '';
             document.getElementById('filter-lang-source').value = '';
@@ -107,6 +247,8 @@
             document.getElementById('catalog-sort').value = 'price_asc';
             renderCatalogCategoryFilterTree();
             renderProductsCatalog();
+            document.getElementById('catalog-search').focus();
+            UX.toast('Фильтры сброшены. Выбранные компоненты сохранены');
         }
 
         function updateLanguageFilters() {
@@ -122,8 +264,9 @@
             }).join('');
             sourceSelect.innerHTML = options(sources);
             targetSelect.innerHTML = options(targets);
-            sourceSelect.value = prevSource;
-            targetSelect.value = prevTarget;
+            selectKnownValue('filter-lang-source', prevSource);
+            selectKnownValue('filter-lang-target', prevTarget);
+            UX.sync();
         }
 
         function renderBreadcrumbs() {
@@ -136,7 +279,7 @@
             store.getCategoryPathIds(selectedCategoryFilterId).forEach(id => {
                 const cat = store.categories.find(c => c.id === id);
                 if (cat) {
-                    crumbs.push(`<button type="button" onclick="setCategoryFilter('${cat.id}')"${id === selectedCategoryFilterId ? ' aria-current="location"' : ''}>${store.escapeHtml(cat.name)}</button>`);
+                    crumbs.push(`<button type="button" data-category-id="${store.escapeHtml(cat.id)}" onclick="setCategoryFilter(this.dataset.categoryId)"${id === selectedCategoryFilterId ? ' aria-current="location"' : ''}>${store.escapeHtml(cat.name)}</button>`);
                 }
             });
             container.innerHTML = crumbs.join('<span aria-hidden="true">/</span>');
@@ -151,6 +294,7 @@
         }
 
         function renderProductsCatalog() {
+            clearTimeout(catalogSearchTimer);
             const searchVal = document.getElementById('catalog-search').value.toLowerCase().trim();
             const sortVal = document.getElementById('catalog-sort').value;
             const langSourceVal = document.getElementById('filter-lang-source').value;
@@ -164,21 +308,22 @@
                 return !searchVal || p.name.toLowerCase().includes(searchVal) || p.description.toLowerCase().includes(searchVal);
             });
             filtered.forEach(p => {
-                p._calculatedBasePrice = p.basePrice;
-                p.components.forEach(c => {
-                    if (c.isRequired && c.additionalPrice) p._calculatedBasePrice += c.additionalPrice;
-                });
+                p._calculatedBasePrice = getProductPrice(p, false);
             });
-            if (sortVal === 'price_asc') filtered.sort((a, b) => a._calculatedBasePrice - b._calculatedBasePrice);
-            else if (sortVal === 'price_desc') filtered.sort((a, b) => b._calculatedBasePrice - a._calculatedBasePrice);
+            if (sortVal === 'price_asc') filtered.sort((a, b) => getProductPrice(a) - getProductPrice(b));
+            else if (sortVal === 'price_desc') filtered.sort((a, b) => getProductPrice(b) - getProductPrice(a));
             else if (sortVal === 'name_asc') filtered.sort((a, b) => a.name.localeCompare(b.name, 'ru'));
-            document.getElementById('catalog-count').textContent = `Найдено: ${filtered.length}`;
+            else if (sortVal === 'name_desc') filtered.sort((a, b) => b.name.localeCompare(a.name, 'ru'));
+            document.getElementById('catalog-count').textContent = `Показано услуг: ${filtered.length} из ${store.products.length}`;
+            renderActiveFilters(filtered.length);
+            writeCatalogQuery();
+            UX.sync();
             grid.innerHTML = filtered.map(p => {
                 const source = store.languages.find(l => l.code === p.sourceLang)?.name || p.sourceLang.toUpperCase();
                 const target = store.languages.find(l => l.code === p.targetLang)?.name || p.targetLang.toUpperCase();
                 const path = getCardBreadcrumbs(p);
                 return `
-                    <article class="service-card" id="prod-card-${p.id}">
+                    <article class="service-card" id="prod-card-${store.escapeHtml(p.id)}">
                         <div class="service-card-body">
                             ${path ? `<p class="service-path">${store.escapeHtml(path)}</p>` : ''}
                             <h2>${store.escapeHtml(p.name)}</h2>
@@ -189,24 +334,28 @@
                                 ${p.components.map(c => c.isRequired ? `
                                     <div class="service-component">
                                         <span><span class="required-mark" aria-hidden="true">✓</span>${store.escapeHtml(c.name)}</span>
-                                        <span>Обязательно${c.additionalPrice > 0 ? `<br>+${priceFormatter.format(c.additionalPrice)}` : ''}</span>
+                                        <span>Обязательно${priceInCents(c.additionalPrice) ? `<br>${priceInCents(c.additionalPrice) > 0 ? '+' : ''}${store.escapeHtml(priceFormatter.format(priceInCents(c.additionalPrice) / 100))}` : ''}</span>
                                     </div>` : `
                                     <label class="service-component">
-                                        <span><input type="checkbox" data-additional-price="${c.additionalPrice}" onchange="recalculateCardPrice('${p.id}')" class="prod-opt-checkbox"><span>${store.escapeHtml(c.name)}</span></span>
-                                        <span>+${priceFormatter.format(c.additionalPrice)}</span>
+                                        <span><input type="checkbox" data-product-id="${store.escapeHtml(p.id)}" data-component-id="${store.escapeHtml(c.id)}" data-additional-price="${priceInCents(c.additionalPrice) / 100}" onchange="recalculateCardPrice(this.dataset.productId)" class="prod-opt-checkbox"${componentSelections.get(p.id)?.get(c.id) ? ' checked' : ''}><span>${store.escapeHtml(c.name)}</span></span>
+                                        <span>${priceInCents(c.additionalPrice) > 0 ? '+' : ''}${store.escapeHtml(priceFormatter.format(priceInCents(c.additionalPrice) / 100))}</span>
                                     </label>`).join('')}
                             </div>` : ''}
                         </div>
-                        <div class="service-price"><span>Итоговая стоимость</span><span class="card-total-price" data-base-price="${p._calculatedBasePrice}" aria-live="polite">${priceFormatter.format(p._calculatedBasePrice)}</span></div>
+                        <div class="service-price"><span>Итоговая стоимость</span><span class="card-total-price" data-base-price="${p._calculatedBasePrice}" aria-live="polite">${store.escapeHtml(priceFormatter.format(getProductPrice(p)))}</span></div>
                     </article>`;
             }).join('');
             if (!filtered.length) {
                 const isEmpty = store.products.length === 0;
+                const nextStep = !store.languages.length
+                    ? ['languages.html', 'Добавить языки', 'Добавьте языки оригинала и перевода, чтобы настроить первую услугу.']
+                    : !store.categories.length
+                        ? ['categories.html', 'Создать категорию', 'Создайте категорию документа, затем настройте для неё услугу.']
+                        : ['products_admin.html', 'Настроить услугу', 'Языки и категории уже есть. Настройте первую услугу, чтобы опубликовать её в каталоге.'];
                 grid.innerHTML = `<div class="empty-state">
-                    <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M13 6h16l8 8v28H13zM29 6v9h8M19 23h12M19 29h12M19 35h7"/></svg>
-                    <h2>${isEmpty ? 'Каталог начинается с первой услуги' : 'Подходящих услуг пока нет'}</h2>
-                    <p>${isEmpty ? 'Добавьте языки и категории документов, затем настройте услугу. Она появится здесь автоматически.' : 'Попробуйте другое название, язык перевода или выберите более широкую категорию.'}</p>
-                    ${isEmpty ? '<a href="languages.html" class="primary-link">Начать с языков <span aria-hidden="true">↗</span></a>' : '<button type="button" class="reset-filters" onclick="resetCatalogFilters()">Сбросить фильтры</button>'}
+                    <h2>${isEmpty ? 'В каталоге пока нет услуг' : 'По выбранным условиям ничего не найдено'}</h2>
+                    <p>${isEmpty ? nextStep[2] : 'Попробуйте другое название, язык перевода или выберите более широкую категорию.'}</p>
+                    ${isEmpty ? `<a href="${nextStep[0]}" class="primary-link">${nextStep[1]}</a>` : '<button type="button" class="reset-filters" onclick="resetCatalogFilters()">Сбросить фильтры</button>'}
                 </div>`;
             }
         }
@@ -214,12 +363,23 @@
         function recalculateCardPrice(productId) {
             const card = document.getElementById(`prod-card-${productId}`);
             if (!card) return;
-            const priceLabel = card.querySelector('.card-total-price');
-            let finalPrice = parseFloat(priceLabel.getAttribute('data-base-price'));
+            const product = store.products.find(p => p.id === productId);
+            if (!product) return;
+            const selected = componentSelections.get(productId) || new Map();
             card.querySelectorAll('.prod-opt-checkbox').forEach(cb => {
-                if (cb.checked) finalPrice += parseFloat(cb.getAttribute('data-additional-price')) || 0;
+                selected.set(cb.dataset.componentId, cb.checked);
             });
-            priceLabel.textContent = priceFormatter.format(finalPrice);
+            componentSelections.set(productId, selected);
+            card.querySelector('.card-total-price').textContent = priceFormatter.format(getProductPrice(product));
+            const sort = document.getElementById('catalog-sort').value;
+            if (sort === 'price_asc' || sort === 'price_desc') {
+                const grid = document.getElementById('catalog-grid');
+                const focused = document.activeElement;
+                const visible = store.products.filter(p => document.getElementById(`prod-card-${p.id}`));
+                visible.sort((a, b) => sort === 'price_asc' ? getProductPrice(a) - getProductPrice(b) : getProductPrice(b) - getProductPrice(a));
+                visible.forEach(p => grid.appendChild(document.getElementById(`prod-card-${p.id}`)));
+                if (card.contains(focused)) focused.focus({ preventScroll: true });
+            }
         }
 
         function refreshUI() {

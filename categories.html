@@ -9,209 +9,309 @@
 </head>
 <body class="admin-page bg-slate-50 font-sans text-slate-800 min-h-screen">
     <div id="navbar-placeholder"></div>
-
     <main class="app-main max-w-7xl mx-auto px-4 py-8 space-y-12">
         <section class="space-y-6">
             <div class="page-heading">
                 <h1 class="page-title">Категории документов</h1>
-                <p class="text-sm text-slate-500">Организуйте документы по разделам и подкатегориям.</p>
+                <p>Организуйте документы по разделам и подкатегориям. Услуги публикуются на странице «Выпуск услуг».</p>
             </div>
-
             <div class="workspace-grid grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div class="panel editor-panel bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-5">
-                    <h3 class="font-bold text-slate-900 text-sm" id="cat-form-title">Создать категорию</h3>
-                    <form id="cat-form" onsubmit="handleCategorySubmit(event)" class="editor-form space-y-4">
-                        <div>
-                            <label for="cat-name-input" class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Название категории (обязательно):</label>
-                            <input type="text" id="cat-name-input" placeholder="Например: Паспорта" required class="block w-full text-sm px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 focus:bg-white transition-all duration-200">
+                <div class="panel editor-panel bg-white p-6 rounded-xl border border-slate-200 space-y-5">
+                    <h3 id="cat-form-title">Создать категорию</h3>
+                    <form id="cat-form" name="category-editor" aria-labelledby="cat-form-title" onsubmit="handleCategorySubmit(event)" class="editor-form space-y-4" autocomplete="off" novalidate>
+                        <div class="form-section">
+                            <label for="cat-name-input">Название категории (обязательно)</label>
+                            <input type="text" id="cat-name-input" name="category-name" placeholder="Например: Паспорта" required class="w-full" aria-describedby="cat-name-hint">
+                            <p id="cat-name-hint" class="field-hint">В одном разделе названия категорий не должны повторяться.</p>
                         </div>
-                        <div>
-                            <label for="cat-parent-select" class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Родительская категория (необязательно):</label>
-                            <select id="cat-parent-select" class="block w-full text-sm px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 focus:bg-white transition-all duration-200">
-                                <option value="">[Корневой раздел — Самый верхний уровень]</option>
+                        <div class="form-section">
+                            <label for="cat-parent-select">Родительская категория</label>
+                            <select id="cat-parent-select" name="category-parent" class="w-full" aria-describedby="cat-parent-hint">
+                                <option value="">Корневая категория</option>
                             </select>
-                            <p class="text-[10px] text-slate-400 mt-1 italic">Примечание: чтобы создать категорию первого уровня, оставьте это поле пустым.</p>
+                            <p id="cat-parent-hint" class="field-hint">Для верхнего уровня выберите «Корневая категория». Опубликованная услуга не может быть родителем новой подкатегории.</p>
                         </div>
-                        <button type="submit" id="cat-submit-btn" class="w-full py-3 px-4 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white text-xs font-bold uppercase tracking-wider rounded-lg shadow-sm hover:shadow-md hover:translate-y-[-1px] active:translate-y-[0px] transition-all duration-200">Добавить в дерево</button>
+                        <div class="form-actions flex flex-wrap gap-2">
+                            <button type="submit" id="cat-submit-btn" class="bg-indigo-600">Добавить в дерево</button>
+                            <button type="button" id="cat-cancel-btn" onclick="cancelCategoryEdit()" class="secondary-button bg-slate-200">Отмена</button>
+                        </div>
                     </form>
                 </div>
-
-                <div class="panel registry-panel md:col-span-2 bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col">
-                    <h3 class="font-bold text-slate-800 text-sm mb-4">Структура документов</h3>
-                    <div id="admin-category-tree" class="flex-1 overflow-y-auto space-y-1.5 pr-1 text-xs">
-                        <!-- Пусто по умолчанию -->
+                <div class="panel registry-panel md:col-span-2 bg-white p-6 rounded-xl border border-slate-200">
+                    <div class="registry-toolbar space-y-3">
+                        <h3 id="cat-registry-title">Структура документов</h3>
+                        <label for="cat-search">Поиск по названию категории</label>
+                        <input type="search" id="cat-search" class="registry-search w-full" autocomplete="off" placeholder="Найти категорию" oninput="renderAdminCategoryTree()" aria-controls="admin-category-tree">
+                        <p id="cat-count-label" class="registry-count field-hint" role="status" aria-live="polite"></p>
+                        <div class="registry-actions flex flex-wrap gap-2">
+                            <button type="button" id="cat-expand-all" onclick="setAllCategoriesCollapsed(false)" class="text-button text-indigo-600">Развернуть всё</button>
+                            <button type="button" id="cat-collapse-all" onclick="setAllCategoriesCollapsed(true)" class="text-button text-indigo-600">Свернуть всё</button>
+                        </div>
+                        <p class="field-hint">При поиске показываются совпадения и их родительские разделы. Чтобы удалить категорию с услугой, сначала снимите её статус на странице <a href="products_admin.html" class="text-indigo-600 underline">«Выпуск услуг»</a>. Вложенные категории сначала перенесите или удалите.</p>
                     </div>
+                    <div id="admin-category-tree" class="space-y-1.5" aria-labelledby="cat-registry-title"></div>
                 </div>
             </div>
         </section>
     </main>
-
     <script src="store.js"></script>
     <script src="nav.js"></script>
+    <script src="ui.js"></script>
     <script>
+        let editingCategoryId = null;
+        let categoryReturnId = null;
+        let collapsedCategories = [];
+        try {
+            const saved = JSON.parse(localStorage.getItem('collapsed_categories') || '[]');
+            if (Array.isArray(saved)) collapsedCategories = saved;
+        } catch {}
+
         document.addEventListener('DOMContentLoaded', () => {
             renderNavbar('nav-categories');
+            document.getElementById('admin-category-tree').addEventListener('click', event => {
+                const button = event.target.closest('button[data-action]');
+                if (!button) return;
+                const id = button.dataset.id;
+                if (button.dataset.action === 'toggle') toggleCollapse(id);
+                if (button.dataset.action === 'edit') startEditCategory(id);
+                if (button.dataset.action === 'child') startAddChildCategory(id);
+                if (button.dataset.action === 'delete') deleteCategory(id);
+            });
             refreshUI();
+            UX.markClean('cat-form');
         });
 
-        let editingCategoryId = null;
-        let collapsedCategories = JSON.parse(localStorage.getItem('collapsed_categories') || '[]');
+        function saveCollapsedCategories() {
+            try {
+                localStorage.setItem('collapsed_categories', JSON.stringify(collapsedCategories));
+            } catch {
+                UX.toast('Состояние дерева не удалось сохранить в браузере.');
+            }
+        }
+
+        function focusCategoryAction(id, action = 'edit') {
+            const button = Array.from(document.querySelectorAll('#admin-category-tree button[data-action]'))
+                .find(item => item.dataset.id === id && item.dataset.action === action);
+            (button || document.getElementById('cat-search')).focus();
+        }
 
         function toggleCollapse(id) {
-            const index = collapsedCategories.indexOf(id);
-            if (index === -1) {
-                collapsedCategories.push(id);
+            if (collapsedCategories.includes(id)) {
+                collapsedCategories = collapsedCategories.filter(item => item !== id);
             } else {
-                collapsedCategories.splice(index, 1);
+                collapsedCategories.push(id);
             }
-            localStorage.setItem('collapsed_categories', JSON.stringify(collapsedCategories));
-            refreshUI();
+            saveCollapsedCategories();
+            renderAdminCategoryTree();
+            focusCategoryAction(id, 'toggle');
+        }
+
+        function setAllCategoriesCollapsed(collapsed) {
+            collapsedCategories = collapsed ? store.categories.filter(c => store.categories.some(child => child.parentId === c.id)).map(c => c.id) : [];
+            saveCollapsedCategories();
+            renderAdminCategoryTree();
         }
 
         function isDescendant(possibleParentId, targetId) {
-            if (!possibleParentId || !targetId) return false;
+            if (!possibleParentId) return false;
+            const visited = new Set();
             let current = store.categories.find(c => c.id === possibleParentId);
             while (current) {
-                if (current.id === targetId) return true;
+                if (current.id === targetId || visited.has(current.id)) return true;
+                visited.add(current.id);
                 current = store.categories.find(c => c.id === current.parentId);
             }
             return false;
         }
 
-        function renderAdminCategoryTree(parentId = null, depth = 0) {
-            const list = store.categories.filter(c => c.parentId === parentId);
-            let html = '';
-            
-            list.forEach(c => {
-                const indent = depth * 16;
-                const hasChildren = store.categories.some(child => child.parentId === c.id);
-                const isCollapsed = collapsedCategories.includes(c.id);
-                const isProduct = c.isProduct === true;
-                
-                let toggleBtn = '';
-                if (hasChildren) {
-                    toggleBtn = `
-                        <button aria-expanded="${!isCollapsed}" aria-label="${isCollapsed ? 'Развернуть' : 'Свернуть'} категорию ${store.escapeHtml(c.name)}" onclick="toggleCollapse('${c.id}')" class="mr-1 text-slate-500 hover:text-slate-800 focus:outline-none font-bold text-[10px] w-4 h-4 rounded hover:bg-slate-100 flex items-center justify-center">
-                            ${isCollapsed ? '▶' : '▼'}
-                        </button>
-                    `;
-                } else {
-                    toggleBtn = `<span class="inline-block w-4 mr-1"></span>`;
-                }
+        function getCategoryRows() {
+            const rows = [];
+            const visited = new Set();
+            const walk = (category, ancestors) => {
+                if (visited.has(category.id)) return;
+                visited.add(category.id);
+                rows.push({ category, ancestors });
+                store.categories.filter(c => c.parentId === category.id).forEach(c => walk(c, [...ancestors, category.id]));
+            };
+            store.categories.filter(c => !c.parentId || !store.categories.some(parent => parent.id === c.parentId)).forEach(c => walk(c, []));
+            store.categories.forEach(c => walk(c, []));
+            return rows;
+        }
 
-                html += `
-                    <div class="registry-row flex flex-wrap items-center justify-between gap-3 py-1.5 border-b border-slate-100 hover:bg-slate-50 rounded" style="padding-left: ${indent}px">
-                        <span class="font-medium text-slate-700 select-none flex items-center">
-                            ${toggleBtn}
-                            <span>${store.escapeHtml(c.name)}</span>
-                            ${isProduct ? `<span class="ml-2 px-1.5 py-0.5 bg-emerald-100 text-emerald-800 text-[9px] font-bold rounded">Услуга</span>` : ''}
+        function renderAdminCategoryTree() {
+            const query = document.getElementById('cat-search').value.trim().toLocaleLowerCase('ru');
+            const rows = getCategoryRows();
+            const matches = rows.filter(({ category }) => category.name.toLocaleLowerCase('ru').includes(query));
+            const included = new Set();
+            matches.forEach(({ category, ancestors }) => [category.id, ...ancestors].forEach(id => included.add(id)));
+            const visible = rows.filter(({ category, ancestors }) => query ? included.has(category.id) : !ancestors.some(id => collapsedCategories.includes(id)));
+            document.getElementById('cat-count-label').textContent = query
+                ? `Найдено: ${matches.length} из ${rows.length}. С родителями показано: ${visible.length}.`
+                : `Всего: ${rows.length}. Показано: ${visible.length}.`;
+            const hasBranches = rows.some(({ ancestors }) => ancestors.length);
+            document.getElementById('cat-expand-all').disabled = !!query || !hasBranches;
+            document.getElementById('cat-collapse-all').disabled = !!query || !hasBranches;
+            const html = visible.map(({ category: c, ancestors }) => {
+                const id = store.escapeHtml(c.id);
+                const name = store.escapeHtml(c.name);
+                const hasChildren = rows.some(row => row.ancestors[row.ancestors.length - 1] === c.id);
+                const collapsed = !query && collapsedCategories.includes(c.id);
+                return `
+                    <div class="registry-row category-row flex flex-wrap items-center justify-between gap-3" style="padding-left: ${Math.min(ancestors.length, 4) * 12}px">
+                        <span class="category-label flex items-start gap-2 min-w-0" style="flex: 1 1 180px">
+                            ${hasChildren ? `<button type="button" data-id="${id}" data-action="toggle" class="text-button category-toggle shrink-0" aria-expanded="${!collapsed}" aria-label="${collapsed ? 'Развернуть' : 'Свернуть'} категорию ${name}" ${query ? 'disabled' : ''}>${collapsed ? '▸' : '▾'}</button>` : ''}
+                            <span class="category-name min-w-0" style="overflow-wrap: anywhere; white-space: normal">${name}${c.isProduct ? '<span class="category-badge block text-slate-500">Опубликованная услуга</span>' : ''}</span>
                         </span>
-                        <div class="flex items-center gap-2">
-                            <button onclick="startEditCategory('${c.id}')" class="text-indigo-600 hover:text-indigo-800 font-semibold px-2">Редактировать</button>
-                            <button aria-label="Удалить категорию ${store.escapeHtml(c.name)}" onclick="deleteCategory('${c.id}')" class="text-rose-500 hover:text-rose-700 font-bold px-1.5">×</button>
+                        <div class="registry-actions flex flex-wrap items-center gap-2">
+                            ${!c.isProduct ? `<button type="button" data-id="${id}" data-action="child" class="text-button text-indigo-600" aria-label="Добавить подкатегорию в ${name}">Добавить подкатегорию</button>` : ''}
+                            <button type="button" data-id="${id}" data-action="edit" class="text-button text-indigo-600" aria-label="Редактировать категорию ${name}">Редактировать</button>
+                            <button type="button" data-id="${id}" data-action="delete" class="text-button text-rose-500" aria-label="Удалить категорию ${name}">Удалить</button>
                         </div>
-                    </div>
-                `;
-                
-                if (!isCollapsed) {
-                    html += renderAdminCategoryTree(c.id, depth + 1);
-                }
-            });
-            
-            if (parentId === null) {
-                document.getElementById("admin-category-tree").innerHTML = html || '<p class="empty-state text-slate-500 text-center py-8">Категорий пока нет. <a href="#cat-name-input" class="text-indigo-600 underline">Создайте первый раздел</a>, затем добавьте подкатегории документов.</p>';
-            }
+                    </div>`;
+            }).join('');
+            document.getElementById('admin-category-tree').innerHTML = html || (rows.length
+                ? '<p class="empty-state">Ничего не найдено. Измените поисковый запрос.</p>'
+                : '<div class="empty-state"><p>Категорий пока нет. Создайте первый раздел, затем добавьте подкатегории.</p><button type="button" class="text-button text-indigo-600" onclick="document.getElementById(\'cat-name-input\').focus()">Создать первую категорию</button></div>');
             return html;
         }
 
         function getCategoryDropdownOptions(parentId = null, depth = 0, excludeId = null) {
-            const list = store.categories.filter(c => c.parentId === parentId);
-            let html = '';
-            list.forEach(c => {
-                if (excludeId && (c.id === excludeId || isDescendant(c.id, excludeId))) {
-                    return;
-                }
-                const prefix = '— '.repeat(depth);
-                html += `<option value="${c.id}">${prefix}${store.escapeHtml(c.name)}</option>`;
-                html += getCategoryDropdownOptions(c.id, depth + 1, excludeId);
-            });
-            return html;
+            return getCategoryRows().filter(({ category: c, ancestors }) => !c.isProduct && !isDescendant(c.id, excludeId) && (!parentId || ancestors.includes(parentId)))
+                .map(({ category: c, ancestors }) => {
+                    const path = ancestors.map(id => store.categories.find(parent => parent.id === id)?.name).filter(Boolean);
+                    return `<option value="${store.escapeHtml(c.id)}">${store.escapeHtml([...path, c.name].join(' → '))}</option>`;
+                }).join('');
         }
 
-        function updateCategorySelectDropdown() {
-            const options = getCategoryDropdownOptions(null, 0, editingCategoryId);
-            document.getElementById("cat-parent-select").innerHTML = `<option value="">[Корневая категория]</option>` + options;
+        function updateCategorySelectDropdown(selectedValue = document.getElementById('cat-parent-select').value) {
+            const select = document.getElementById('cat-parent-select');
+            select.innerHTML = '<option value="">Корневая категория</option>' + getCategoryDropdownOptions(null, 0, editingCategoryId);
+            if (selectedValue && !Array.from(select.options).some(option => option.value === selectedValue)) {
+                const parent = store.categories.find(c => c.id === selectedValue);
+                const option = new Option(`${parent ? parent.name : 'Недоступная категория'} — текущий родитель, недоступен для новых связей`, selectedValue);
+                option.disabled = true;
+                select.add(option);
+            }
+            select.value = selectedValue;
+            UX.sync();
         }
 
-        function startEditCategory(id) {
+        function resetCategoryForm(parentId = '') {
+            editingCategoryId = null;
+            const form = document.getElementById('cat-form');
+            form.reset();
+            document.getElementById('cat-form-title').textContent = 'Создать категорию';
+            document.getElementById('cat-submit-btn').textContent = 'Добавить в дерево';
+            updateCategorySelectDropdown(parentId);
+            UX.markClean(form);
+        }
+
+        async function startEditCategory(id) {
+            if (editingCategoryId === id) {
+                document.getElementById('cat-name-input').focus();
+                return;
+            }
+            if (!(await UX.discard('cat-form'))) return;
             const cat = store.categories.find(c => c.id === id);
             if (!cat) return;
-
+            document.getElementById('cat-form').reset();
             editingCategoryId = id;
-            document.getElementById("cat-form-title").textContent = "Редактировать категорию";
-            document.getElementById("cat-name-input").value = cat.name;
-            
-            updateCategorySelectDropdown();
-            document.getElementById("cat-parent-select").value = cat.parentId || "";
-            document.getElementById("cat-submit-btn").textContent = "Сохранить изменения";
+            categoryReturnId = id;
+            document.getElementById('cat-form-title').textContent = 'Редактировать категорию';
+            document.getElementById('cat-name-input').value = cat.name;
+            document.getElementById('cat-submit-btn').textContent = 'Сохранить изменения';
+            updateCategorySelectDropdown(cat.parentId || '');
+            UX.markClean('cat-form');
+            document.getElementById('cat-name-input').focus();
+        }
+
+        async function startAddChildCategory(id) {
+            const parent = store.categories.find(c => c.id === id);
+            if (!parent) return;
+            if (parent.isProduct) {
+                UX.toast('Нельзя добавить подкатегорию к опубликованной услуге. Сначала снимите статус услуги на странице «Выпуск услуг».');
+                return;
+            }
+            if (!(await UX.discard('cat-form'))) return;
+            categoryReturnId = id;
+            resetCategoryForm(id);
+            document.getElementById('cat-name-input').focus();
+        }
+
+        async function cancelCategoryEdit() {
+            if (!(await UX.discard('cat-form'))) return;
+            const id = categoryReturnId;
+            categoryReturnId = null;
+            resetCategoryForm();
+            if (id) focusCategoryAction(id);
+            else document.getElementById('cat-name-input').focus();
         }
 
         function handleCategorySubmit(e) {
             e.preventDefault();
-            const nameInput = document.getElementById("cat-name-input");
-            const parentSelect = document.getElementById("cat-parent-select");
+            const nameInput = document.getElementById('cat-name-input');
+            const parentSelect = document.getElementById('cat-parent-select');
             const name = nameInput.value.trim();
             const parentId = parentSelect.value || null;
-
-            if (!name) return;
-
-            if (editingCategoryId) {
-                const cat = store.categories.find(c => c.id === editingCategoryId);
-                if (cat) {
-                    cat.name = name;
-                    cat.parentId = parentId;
-                    store.saveCategories();
-
-                    // Каскадный пересчет путей для синхронной фильтрации на витрине
-                    store.products.forEach(p => {
-                        p.categoryPathIds = store.getCategoryPathIds(p.categoryId);
-                    });
-                    store.saveProducts();
-                }
-                editingCategoryId = null;
-                document.getElementById("cat-form-title").textContent = "Создать категорию";
-                document.getElementById("cat-submit-btn").textContent = "Добавить в дерево";
-            } else {
-                store.categories.push({ id: store.generateUniqueId("cat"), name, parentId });
-                store.saveCategories();
+            const cat = store.categories.find(c => c.id === editingCategoryId);
+            const parent = store.categories.find(c => c.id === parentId);
+            if (!name) { UX.error(nameInput, 'Введите название категории.'); return; }
+            if (editingCategoryId && !cat) { UX.error(nameInput, 'Категория больше не существует. Отмените редактирование.'); return; }
+            if (parentId && !parent) { UX.error(parentSelect, 'Выберите существующую родительскую категорию.'); return; }
+            if (parentId && isDescendant(parentId, editingCategoryId)) { UX.error(parentSelect, 'Нельзя выбрать саму категорию, её потомка или ветку с циклом.'); return; }
+            if (parent?.isProduct && (!cat || cat.parentId !== parentId)) { UX.error(parentSelect, 'Нельзя добавлять подкатегории к опубликованной услуге. Выберите другой раздел.'); return; }
+            const normalized = name.toLocaleLowerCase('ru');
+            const unchanged = cat && cat.name === nameInput.value && (cat.parentId || null) === parentId;
+            if (!unchanged && store.categories.some(c => c.id !== editingCategoryId && (c.parentId || null) === parentId && c.name.trim().toLocaleLowerCase('ru') === normalized)) {
+                UX.error(nameInput, 'В этом разделе уже есть категория с таким названием. Укажите другое название.');
+                return;
             }
-
-            nameInput.value = '';
-            parentSelect.value = '';
+            const wasEditing = !!cat;
+            if (cat) {
+                if (cat.name !== nameInput.value) cat.name = name;
+                cat.parentId = parentId;
+            } else {
+                store.categories.push({ id: store.generateUniqueId('cat'), name, parentId });
+            }
+            store.saveCategories();
+            if (parentId) {
+                const path = store.getCategoryPathIds(parentId);
+                collapsedCategories = collapsedCategories.filter(id => !path.includes(id));
+                saveCollapsedCategories();
+            }
+            resetCategoryForm(parent?.isProduct ? '' : (parentId || ''));
+            categoryReturnId = null;
             refreshUI();
+            UX.markClean('cat-form');
+            UX.toast(wasEditing ? 'Изменения категории сохранены.' : 'Категория добавлена.');
+            document.getElementById('cat-name-input').focus();
         }
 
-        function deleteCategory(id) {
+        async function deleteCategory(id) {
+            const cat = store.categories.find(c => c.id === id);
+            if (!cat) return;
+            if (cat.isProduct || store.products.some(p => p.categoryId === id)) {
+                UX.toast(`Категория «${cat.name}» используется услугой. Сначала снимите статус услуги на странице «Выпуск услуг».`);
+                return;
+            }
             if (store.categories.some(c => c.parentId === id)) {
-                alert("Ошибка удаления: Данная категория содержит вложенные подкатегории.");
+                UX.toast(`В категории «${cat.name}» есть подкатегории. Сначала перенесите их в другой раздел или удалите.`);
                 return;
             }
-            if (store.products.some(p => p.categoryId === id)) {
-                alert("Ошибка удаления: К этой категории привязаны товары.");
-                return;
-            }
-
-            if (editingCategoryId === id) {
-                editingCategoryId = null;
-                document.getElementById("cat-form-title").textContent = "Создать категорию";
-                document.getElementById("cat-name-input").value = "";
-                document.getElementById("cat-parent-select").value = "";
-                document.getElementById("cat-submit-btn").textContent = "Добавить в дерево";
-            }
-
+            const affectsForm = editingCategoryId === id || document.getElementById('cat-parent-select').value === id;
+            if (affectsForm && !(await UX.discard('cat-form'))) return;
+            if (!(await UX.confirm({ title: 'Удаление категории', message: `Удалить категорию «${cat.name}»? Это действие нельзя отменить.` }))) return;
             store.categories = store.categories.filter(c => c.id !== id);
             store.saveCategories();
+            collapsedCategories = collapsedCategories.filter(item => item !== id);
+            saveCollapsedCategories();
+            if (affectsForm) {
+                resetCategoryForm();
+                categoryReturnId = null;
+            }
             refreshUI();
+            UX.toast(`Категория «${cat.name}» удалена.`);
+            document.getElementById('cat-search').focus();
         }
 
         function refreshUI() {

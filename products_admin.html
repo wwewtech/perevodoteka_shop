@@ -12,72 +12,77 @@
 
     <main class="app-main max-w-7xl mx-auto px-4 py-8 space-y-12">
         <section class="space-y-6">
-            <div class="page-heading">
+            <div class="page-heading page-header">
                 <h1 class="page-title">Выпуск услуг</h1>
                 <p class="text-sm text-slate-500">Настройте перевод, стоимость и компоненты услуги для выбранной подкатегории.</p>
             </div>
 
             <div class="workspace-grid grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <div class="panel editor-panel bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col">
-                    <h3 class="font-bold text-slate-800 text-sm mb-4" id="prod-form-title">Настроить конечную услугу</h3>
-                    <form id="product-form" onsubmit="handleProductSubmit(event)" class="editor-form space-y-4 text-xs">
-                        
-                        <div>
-                            <label for="prod-category-select" class="block text-[10px] font-bold text-slate-500 mb-1">Категория без вложенных разделов (обязательно):</label>
-                            <select id="prod-category-select" required onchange="handleCategorySelectionChange(this.value)" class="w-full px-2.5 py-2 border border-slate-300 rounded-lg focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none">
-                                <option value="">-- Выберите подкатегорию --</option>
-                            </select>
-                        </div>
-
-                        <div>
-                            <label for="prod-template-select" class="block text-[10px] font-bold text-slate-500 mb-1">Шаблон перевода (необязательно):</label>
-                            <select id="prod-template-select" onchange="applyTemplateToProductForm(this.value)" class="w-full px-2.5 py-1.5 border border-slate-300 rounded focus:border-indigo-500">
-                                <option value="">[Создать без шаблона — ручной ввод]</option>
-                            </select>
-                        </div>
-
-                        <div class="space-y-2">
+                    <header class="panel-header mb-4 flex flex-wrap items-center justify-between gap-3"><h2 class="font-bold text-lg" id="prod-form-title">Новая услуга</h2><button type="button" onclick="createProduct()" class="text-indigo-600 font-semibold">Создать услугу</button></header>
+                    <form id="product-form" onsubmit="handleProductSubmit(event)" class="editor-form space-y-4 text-xs" autocomplete="off" novalidate>
+                        <fieldset class="editor-section prod-section border border-slate-200 rounded-lg p-3 space-y-3">
+                            <legend class="px-1 text-[10px] font-bold text-indigo-600 uppercase tracking-wider">1. Категория и услуга</legend>
+                            <div>
+                                <label for="prod-category-select" class="block text-[10px] font-bold text-slate-500 mb-1">Категория услуги (обязательно):</label>
+                                <select id="prod-category-select" name="prod-category-select" required autocomplete="off" onchange="handleCategorySelectionChange(this.value)" class="w-full px-2.5 py-2 border border-slate-300 rounded-lg focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none">
+                                    <option value="">-- Выберите конечную подкатегорию --</option>
+                                </select>
+                            </div>
                             <div>
                                 <label for="prod-name" class="block text-[10px] font-bold text-slate-500 mb-1">Название услуги (обязательно):</label>
-                                <input type="text" id="prod-name" placeholder="Название услуги для витрины" required class="w-full px-2.5 py-1.5 border border-slate-300 rounded focus:border-indigo-500">
+                                <input type="text" id="prod-name" name="prod-name" placeholder="Название услуги для витрины" required autocomplete="off" class="w-full px-2.5 py-1.5 border border-slate-300 rounded focus:border-indigo-500">
+                                <p class="text-[10px] text-slate-400 mt-1">Название категории останется без изменений; для услуги будет сохранено отдельное название.</p>
                             </div>
                             <div>
                                 <label for="prod-desc" class="block text-[10px] font-bold text-slate-500 mb-1">Описание (необязательно):</label>
-                                <textarea id="prod-desc" placeholder="Описание для покупателей" class="w-full px-2.5 py-1.5 border border-slate-300 rounded focus:border-indigo-500" rows="2"></textarea>
+                                <textarea id="prod-desc" name="prod-desc" placeholder="Описание для покупателей" autocomplete="off" class="w-full px-2.5 py-1.5 border border-slate-300 rounded focus:border-indigo-500" rows="2"></textarea>
                             </div>
-                            
+                        </fieldset>
+
+                        <fieldset class="editor-section prod-section border border-slate-200 rounded-lg p-3 space-y-3">
+                            <legend class="px-1 text-[10px] font-bold text-indigo-600 uppercase tracking-wider">2. Перевод</legend>
+                            <div>
+                                <label for="prod-template-select" class="block text-[10px] font-bold text-slate-500 mb-1">Шаблон перевода (необязательно):</label>
+                                <select id="prod-template-select" name="prod-template-select" autocomplete="off" onchange="handleTemplateSelectionChange(this.value)" class="w-full px-2.5 py-1.5 border border-slate-300 rounded focus:border-indigo-500">
+                                    <option value="">[Создать без шаблона — ручной ввод]</option>
+                                </select>
+                                <p class="snapshot-notice text-sm text-slate-600 mt-1">Шаблон заменит языки, цену и компоненты, сохранив название и описание услуги. Это копия: изменения шаблона не обновят услугу. «Без шаблона» убирает только связь, сохраняя введённые данные.</p>
+                            </div>
                             <div class="grid grid-cols-2 gap-3">
                                 <div>
                                     <label for="prod-source" class="block text-[10px] font-bold text-slate-500 mb-1">Язык оригинала (обязательно):</label>
-                                    <select id="prod-source" required class="w-full px-2.5 py-1.5 border border-slate-300 rounded focus:border-indigo-500">
+                                    <select id="prod-source" name="prod-source" required autocomplete="off" class="w-full px-2.5 py-1.5 border border-slate-300 rounded focus:border-indigo-500">
                                         <option value="">-- Выберите язык --</option>
                                     </select>
                                 </div>
                                 <div>
                                     <label for="prod-target" class="block text-[10px] font-bold text-slate-500 mb-1">Язык перевода (обязательно):</label>
-                                    <select id="prod-target" required class="w-full px-2.5 py-1.5 border border-slate-300 rounded focus:border-indigo-500">
+                                    <select id="prod-target" name="prod-target" required autocomplete="off" class="w-full px-2.5 py-1.5 border border-slate-300 rounded focus:border-indigo-500">
                                         <option value="">-- Выберите язык --</option>
                                     </select>
                                 </div>
                             </div>
-
                             <div>
                                 <label for="prod-price" class="block text-[10px] font-bold text-slate-500 mb-1">Базовая стоимость услуги (обязательно):</label>
-                                <input type="number" step="0.01" id="prod-price" placeholder="Базовая цена услуги" required class="w-full px-2.5 py-1.5 border border-slate-300 rounded focus:border-indigo-500">
+                                <input type="number" step="0.01" min="0" id="prod-price" name="prod-price" placeholder="0.00" required autocomplete="off" class="w-full px-2.5 py-1.5 border border-slate-300 rounded focus:border-indigo-500" oninput="updateProductPriceSummary()">
                             </div>
-                        </div>
+                            <div id="prod-price-summary" role="status" aria-live="polite" class="price-summary bg-indigo-50 border border-indigo-100 rounded px-2.5 py-1.5 text-[11px] text-indigo-700 font-semibold"></div>
+                        </fieldset>
 
-                        <div class="border-t border-slate-200 pt-3">
-                            <span class="text-[10px] font-bold text-slate-500 block mb-2">Настраиваемые компоненты:</span>
+                        <fieldset class="editor-section prod-section border border-slate-200 rounded-lg p-3 space-y-2">
+                            <legend class="px-1 text-[10px] font-bold text-indigo-600 uppercase tracking-wider">3. Компоненты услуги</legend>
                             <div id="prod-components-container" class="space-y-2">
                                 <!-- Рендерится динамически -->
                             </div>
-                            <button type="button" onclick="addProductComponentRow()" class="mt-2 text-[10px] text-indigo-600 hover:text-indigo-800 font-semibold flex items-center gap-1">+ Добавить компонент</button>
-                        </div>
+                            <p class="text-[10px] text-slate-400">Цена услуги = базовая стоимость + цены обязательных компонентов. Необязательные компоненты оплачиваются по выбору клиента.</p>
+                            <button type="button" onclick="addProductComponentRow()" class="mt-1 text-[10px] text-indigo-600 hover:text-indigo-800 font-semibold flex items-center gap-1">+ Добавить компонент</button>
+                        </fieldset>
 
-                        <div class="space-y-2 pt-2">
+                        <div class="editor-actions space-y-2 pt-2">
+                            <button type="button" onclick="cancelProductForm()" class="w-full py-2 border border-slate-300 rounded-lg font-semibold">Отменить изменения</button>
                             <button type="submit" id="prod-submit-btn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 px-4 rounded-lg transition text-xs uppercase tracking-wider">
-                                Применить статус товара
+                                Опубликовать услугу
                             </button>
                             <div id="deconfigure-btn-container"></div>
                         </div>
@@ -85,7 +90,16 @@
                 </div>
 
                 <div class="panel registry-panel bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col">
-                    <h3 class="font-bold text-slate-800 text-sm mb-4">Опубликованные услуги</h3>
+                    <div class="mb-4 space-y-3">
+                        <div>
+                            <h3 class="font-bold text-slate-800 text-sm">Опубликованные услуги</h3>
+                            <p class="text-[10px] text-slate-500" id="prod-count-label">Всего: 0</p>
+                        </div>
+                        <div>
+                            <label for="prod-search" class="block text-[10px] font-bold text-slate-500 mb-1">Поиск по услугам:</label>
+                            <input type="search" id="prod-search" placeholder="Название, категория, языки..." autocomplete="off" class="w-full px-2.5 py-1.5 border border-slate-300 rounded focus:border-indigo-500" oninput="renderProductsList()">
+                        </div>
+                    </div>
                     <div id="products-list" class="flex-1 overflow-y-auto space-y-3 pr-1">
                         <!-- Список товаров -->
                     </div>
@@ -96,18 +110,23 @@
 
     <script src="store.js"></script>
     <script src="nav.js"></script>
+    <script src="ui.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             renderNavbar('nav-products-admin');
             refreshUI();
+            UX.markClean('product-form');
         });
 
         let prodComponents = [];
+        let currentProductId = null;
+        let currentTemplateId = '';
+        let switchingProduct = false;
 
-        function getLeafCategories() {
+        function getServiceCategories() {
             return store.categories.filter(cat => {
                 const hasChildren = store.categories.some(child => child.parentId === cat.id);
-                return !hasChildren;
+                return !hasChildren || cat.isProduct;
             });
         }
 
@@ -119,32 +138,66 @@
             }).filter(Boolean).join(' → ');
         }
 
+        function getServiceDisplayName(cat) {
+            return cat.productName || cat.name;
+        }
+
         function updateTemplatesDropdown() {
             const select = document.getElementById("prod-template-select");
+            const prev = select.value;
             let html = `<option value="">[Создать без шаблона — ручной ввод]</option>`;
             store.templates.forEach(t => {
-                html += `<option value="${t.id}">${store.escapeHtml(t.name)} (база: ${t.basePrice})</option>`;
+                html += `<option value="${t.id}">${store.escapeHtml(t.name)} (база: ${UX.formatPrice(t.basePrice)})</option>`;
             });
             select.innerHTML = html;
+            setProductSelect(select.id, prev);
+            UX.sync();
         }
 
         function updateProductCategoryDropdown() {
             const select = document.getElementById("prod-category-select");
-            const leafs = getLeafCategories();
+            const prev = select.value;
+            const leafs = getServiceCategories();
             let html = '<option value="">-- Выберите конечную подкатегорию --</option>';
             leafs.forEach(c => {
-                html += `<option value="${c.id}">${store.escapeHtml(getCategoryFullPathName(c.id))}</option>`;
+                const label = getCategoryFullPathName(c.id) + (c.isProduct ? ' (услуга)' : '');
+                html += `<option value="${c.id}">${store.escapeHtml(label)}</option>`;
             });
             select.innerHTML = html;
+            setProductSelect(select.id, prev);
+            UX.sync();
         }
 
         function updateProductLanguageSelectors() {
+            const source = document.getElementById("prod-source");
+            const target = document.getElementById("prod-target");
+            const prevSource = source.value;
+            const prevTarget = target.value;
             let optionsHtml = '<option value="">-- Выберите язык --</option>';
             store.languages.forEach(l => {
                 optionsHtml += `<option value="${l.code}">${store.escapeHtml(l.name)} (${store.escapeHtml(l.code.toUpperCase())})</option>`;
             });
-            document.getElementById("prod-source").innerHTML = optionsHtml;
-            document.getElementById("prod-target").innerHTML = optionsHtml;
+            source.innerHTML = optionsHtml;
+            target.innerHTML = optionsHtml;
+            setProductSelect(source.id, prevSource);
+            setProductSelect(target.id, prevTarget);
+            UX.sync();
+        }
+
+        function updateProductPriceSummary() {
+            const input = document.getElementById('prod-price');
+            const base = Number(input.value);
+            const summary = document.getElementById('prod-price-summary');
+            const prices = prodComponents.map(c => Number(c.additionalPrice));
+            if (!input.value || !Number.isFinite(base) || base < 0 || prices.some(p => !Number.isFinite(p) || p < 0)) {
+                summary.textContent = 'Укажите корректную базовую стоимость и доплаты для расчёта.';
+                return;
+            }
+            const required = prodComponents.reduce((sum, c, i) => sum + (c.isRequired ? prices[i] : 0), 0);
+            const optional = prodComponents.reduce((sum, c, i) => sum + (!c.isRequired ? prices[i] : 0), 0);
+            summary.textContent = 'База: ' + UX.formatPrice(base) + ' · Обязательные: ' + UX.formatPrice(required) +
+                ' · Минимум: ' + UX.formatPrice(base + required) +
+                (optional > 0 ? ' · Со всеми дополнительными: ' + UX.formatPrice(base + required + optional) : ' · Дополнительные компоненты не увеличивают цену.');
         }
 
         function renderProductComponentsEditor() {
@@ -154,10 +207,10 @@
             prodComponents.forEach(comp => {
                 const rowHtml = `
                     <div class="component-editor-row grid items-center gap-2 p-2 bg-slate-50 border border-slate-200 rounded text-[11px]" id="prod-row-${comp.id}">
-                        <input type="text" aria-label="Название компонента (обязательно)" placeholder="Часть документа" required value="${store.escapeHtml(comp.name)}" class="prod-comp-name min-w-0 w-full px-1.5 py-1 border border-slate-300 rounded focus:outline-none" oninput="updateProductComponent('${comp.id}', 'name', this.value)">
-                        <input type="number" aria-label="Дополнительная стоимость компонента (необязательно)" step="0.01" placeholder="Доп. цена" value="${comp.additionalPrice || ''}" class="prod-comp-price min-w-0 w-full px-1 py-1 border border-slate-300 rounded focus:outline-none" oninput="updateProductComponent('${comp.id}', 'additionalPrice', parseFloat(this.value) || 0)">
+                        <label class="component-field text-sm">Название части<input id="prod-comp-name-${comp.id}" name="prod-comp-name-${comp.id}" required type="text" aria-label="Название компонента (обязательно)" placeholder="Часть документа" autocomplete="off" value="${store.escapeHtml(comp.name)}" class="prod-comp-name min-w-0 w-full px-1.5 py-1 border border-slate-300 rounded focus:outline-none" oninput="updateProductComponent('${comp.id}', 'name', this.value)"></label>
+                        <label class="component-field text-sm">Доплата, ₽<input id="prod-comp-price-${comp.id}" name="prod-comp-price-${comp.id}" type="number" aria-label="Дополнительная стоимость компонента (необязательно)" step="0.01" min="0" placeholder="Доп. цена" value="${store.escapeHtml(String(comp.additionalPrice ?? ''))}" class="prod-comp-price min-w-0 w-full px-1 py-1 border border-slate-300 rounded focus:outline-none" oninput="updateProductComponent('${comp.id}', 'additionalPrice', this.validity.badInput ? 'invalid' : this.value); updateProductPriceSummary()"></label>
                         <label for="prod-comp-required-${comp.id}" class="flex items-center gap-1 select-none">
-                            <input id="prod-comp-required-${comp.id}" type="checkbox" ${comp.isRequired ? 'checked' : ''} class="prod-comp-req h-3 w-3 text-indigo-600 border-slate-300 rounded" onchange="updateProductComponent('${comp.id}', 'isRequired', this.checked)">
+                            <input id="prod-comp-required-${comp.id}" type="checkbox" ${comp.isRequired ? 'checked' : ''} class="prod-comp-req h-3 w-3 text-indigo-600 border-slate-300 rounded" onchange="updateProductComponent('${comp.id}', 'isRequired', this.checked); updateProductPriceSummary()">
                             <span class="text-[10px]">Обязательный</span>
                         </label>
                         <button type="button" aria-label="Удалить компонент" onclick="removeProductComponentRow('${comp.id}')" class="text-rose-500 hover:text-rose-700 font-bold px-1">×</button>
@@ -165,11 +218,18 @@
                 `;
                 container.insertAdjacentHTML('beforeend', rowHtml);
             });
+            updateProductPriceSummary();
         }
 
         function addProductComponentRow() {
-            prodComponents.push({ id: store.generateUniqueId("comp"), name: "", isRequired: false, additionalPrice: 0 });
+            const comp = { id: store.generateUniqueId("comp"), name: "", isRequired: false, additionalPrice: 0 };
+            prodComponents.push(comp);
             renderProductComponentsEditor();
+            const row = document.getElementById("prod-row-" + comp.id);
+            if (row) {
+                const nameInput = row.querySelector(".prod-comp-name");
+                if (nameInput) nameInput.focus();
+            }
         }
 
         function updateProductComponent(id, field, value) {
@@ -178,164 +238,272 @@
         }
 
         function removeProductComponentRow(id) {
+            const idx = prodComponents.findIndex(c => c.id === id);
             prodComponents = prodComponents.filter(c => c.id !== id);
             renderProductComponentsEditor();
+            const next = prodComponents[Math.min(idx, prodComponents.length - 1)];
+            if (!next) document.querySelector('[onclick="addProductComponentRow()"]')?.focus();
+            if (next) {
+                const row = document.getElementById("prod-row-" + next.id);
+                if (row) {
+                    const nameInput = row.querySelector(".prod-comp-name");
+                    if (nameInput) nameInput.focus();
+                }
+            }
         }
 
-        function handleCategorySelectionChange(catId) {
-            if (!catId) {
-                document.getElementById("product-form").reset();
-                prodComponents = [];
-                addProductComponentRow();
-                document.getElementById("prod-submit-btn").textContent = "Применить статус товара";
-                document.getElementById("deconfigure-btn-container").innerHTML = '';
-                return;
-            }
-
-            const cat = store.categories.find(c => c.id === catId);
-            if (cat && cat.isProduct) {
-                document.getElementById("prod-template-select").value = cat.templateId || "";
-                document.getElementById("prod-name").value = cat.name;
-                document.getElementById("prod-desc").value = cat.description || "";
-                document.getElementById("prod-source").value = cat.sourceLang || "";
-                document.getElementById("prod-target").value = cat.targetLang || "";
-                document.getElementById("prod-price").value = cat.basePrice || 0;
-
-                prodComponents = JSON.parse(JSON.stringify(cat.components || []));
-                renderProductComponentsEditor();
-
-                document.getElementById("prod-submit-btn").textContent = "Сохранить изменения товара";
-                
-                document.getElementById("deconfigure-btn-container").innerHTML = `
-                    <button type="button" onclick="deconfigureProduct('${cat.id}')" class="w-full py-2 bg-slate-100 hover:bg-rose-50 text-rose-600 hover:text-rose-700 font-bold rounded-lg border border-slate-200 transition text-xs">
+        function setFormMode(mode) {
+            document.getElementById("prod-submit-btn").textContent = mode;
+            const deconf = document.getElementById("deconfigure-btn-container");
+            if (mode === "Сохранить изменения услуги" && currentProductId) {
+                deconf.innerHTML = `
+                    <button type="button" onclick="deconfigureProduct('${currentProductId}')" class="w-full py-2 bg-slate-100 hover:bg-rose-50 text-rose-600 hover:text-rose-700 font-bold rounded-lg border border-slate-200 transition text-xs">
                         Сбросить настройки товара (Снять статус услуги)
                     </button>
                 `;
             } else {
-                document.getElementById("prod-name").value = cat ? cat.name : "";
-                document.getElementById("prod-desc").value = "";
-                document.getElementById("prod-price").value = "";
-                document.getElementById("prod-template-select").value = "";
-                prodComponents = [];
-                addProductComponentRow();
-                document.getElementById("prod-submit-btn").textContent = "Настроить категорию как товар";
-                document.getElementById("deconfigure-btn-container").innerHTML = '';
+                deconf.innerHTML = '';
             }
         }
 
-        function startEditProduct(id) {
-            document.getElementById("prod-category-select").value = id;
-            handleCategorySelectionChange(id);
+        async function handleCategorySelectionChange(catId) {
+            const select = document.getElementById('prod-category-select');
+            select.value = currentProductId || '';
+            UX.sync();
+            if (switchingProduct || catId === (currentProductId || '')) return;
+            switchingProduct = true;
+            try {
+                if (!(await UX.discard('product-form'))) return;
+                loadProductCategory(catId);
+            } finally {
+                switchingProduct = false;
+            }
         }
 
-        function applyTemplateToProductForm(tplId) {
-            const form = document.getElementById("product-form");
-            const selectCat = document.getElementById("prod-category-select").value;
-            form.reset();
-            document.getElementById("prod-template-select").value = tplId;
-            document.getElementById("prod-category-select").value = selectCat;
-
-            if (!tplId) {
-                prodComponents = [];
-                addProductComponentRow();
-                return;
+        function loadProductCategory(catId) {
+            resetProductForm();
+            const cat = store.categories.find(c => c.id === catId);
+            if (!cat) return;
+            currentProductId = cat.id;
+            document.getElementById('prod-category-select').value = cat.id;
+            if (cat.isProduct) {
+                currentTemplateId = cat.templateId || '';
+                setProductSelect('prod-template-select', currentTemplateId);
+                document.getElementById('prod-name').value = getServiceDisplayName(cat);
+                document.getElementById('prod-desc').value = cat.description || '';
+                setProductSelect('prod-source', cat.sourceLang || '');
+                setProductSelect('prod-target', cat.targetLang || '');
+                document.getElementById('prod-price').value = cat.basePrice ?? 0;
+                prodComponents = (cat.components || []).map(c => ({ ...c, id: store.generateUniqueId('comp') }));
             }
-
-            const tpl = store.templates.find(t => t.id === tplId);
-            if (!tpl) return;
-
-            const cat = store.categories.find(c => c.id === selectCat);
-            document.getElementById("prod-name").value = cat ? cat.name : tpl.name;
-            document.getElementById("prod-desc").value = tpl.description;
-            document.getElementById("prod-source").value = tpl.sourceLang;
-            document.getElementById("prod-target").value = tpl.targetLang;
-            document.getElementById("prod-price").value = tpl.basePrice;
-
-            prodComponents = JSON.parse(JSON.stringify(tpl.components.map(c => ({...c, id: store.generateUniqueId("comp")}))));
             renderProductComponentsEditor();
+            setFormMode(cat.isProduct ? 'Сохранить изменения услуги' : 'Опубликовать услугу');
+            document.getElementById('prod-form-title').textContent = cat.isProduct ? 'Редактирование опубликованной услуги' : 'Новая услуга';
+            UX.sync();
+            UX.markClean('product-form');
+            document.getElementById('prod-name').focus();
+        }
+
+        function setProductSelect(id, value) {
+            const select = document.getElementById(id);
+            if (value && !Array.from(select.options).some(option => option.value === value)) {
+                select.add(new Option(value + ' (нет в реестре)', value));
+            }
+            select.value = value;
+        }
+
+        async function createProduct() {
+            if (!(await UX.discard('product-form'))) return;
+            resetProductForm();
+            document.getElementById('prod-category-select').focus();
+        }
+
+        async function cancelProductForm() {
+            if (!(await UX.discard('product-form'))) return;
+            if (currentProductId) loadProductCategory(currentProductId);
+            else resetProductForm();
+            UX.toast('Изменения отменены.');
+        }
+
+        function resetProductForm() {
+            currentProductId = null;
+            currentTemplateId = '';
+            document.getElementById('prod-form-title').textContent = 'Новая услуга';
+            const form = document.getElementById("product-form");
+            form.reset();
+            document.getElementById("prod-template-select").value = "";
+            prodComponents = [];
+            renderProductComponentsEditor();
+            setFormMode("Опубликовать услугу");
+            UX.sync();
+            updateProductPriceSummary();
+            UX.markClean(form);
+        }
+
+        async function startEditProduct(id) {
+            await handleCategorySelectionChange(id);
+        }
+
+        async function handleTemplateSelectionChange(tplId) {
+            const select = document.getElementById('prod-template-select');
+            select.value = currentTemplateId;
+            UX.sync();
+            if (switchingProduct || tplId === currentTemplateId) return;
+            const tpl = store.templates.find(t => t.id === tplId);
+            if (tplId && !tpl) return;
+            switchingProduct = true;
+            try {
+                if (tpl && !(await UX.discard('product-form'))) return;
+                currentTemplateId = tplId;
+                select.value = tplId;
+                if (tpl) {
+                    setProductSelect('prod-source', tpl.sourceLang || '');
+                    setProductSelect('prod-target', tpl.targetLang || '');
+                    document.getElementById('prod-price').value = tpl.basePrice ?? '';
+                    prodComponents = (tpl.components || []).map(c => ({ ...c, id: store.generateUniqueId('comp') }));
+                    renderProductComponentsEditor();
+                    UX.toast('Параметры шаблона скопированы. Сохраните услугу, чтобы применить их.');
+                }
+                UX.sync();
+                updateProductPriceSummary();
+            } finally {
+                switchingProduct = false;
+            }
+        }
+
+        async function applyTemplateToProductForm(tplId) {
+            await handleTemplateSelectionChange(tplId);
+        }
+
+        function validateProductComponents() {
+            let valid = true;
+            let firstRow = null;
+            prodComponents.forEach(comp => {
+                const row = document.getElementById("prod-row-" + comp.id);
+                if (!row) return;
+                const nameInput = row.querySelector(".prod-comp-name");
+                const priceInput = row.querySelector(".prod-comp-price");
+                const name = (comp.name || "").trim();
+                const priceRaw = String(comp.additionalPrice ?? '').trim();
+                const price = Number(priceRaw);
+                if (!name) {
+                    UX.error(nameInput, "Укажите название компонента или удалите строку.");
+                    valid = false;
+                    if (!firstRow) firstRow = nameInput;
+                } else if (!isFinite(price) || price < 0) {
+                    UX.error(priceInput, "Цена должна быть числом ≥ 0.");
+                    valid = false;
+                    if (!firstRow) firstRow = priceInput;
+                }
+            });
+            return { valid, firstRow };
         }
 
         function handleProductSubmit(e) {
             e.preventDefault();
             const tplId = document.getElementById("prod-template-select").value || null;
             const categoryId = document.getElementById("prod-category-select").value;
-            const name = document.getElementById("prod-name").value.trim();
-            const desc = document.getElementById("prod-desc").value.trim();
-            const sourceLang = document.getElementById("prod-source").value;
-            const targetLang = document.getElementById("prod-target").value;
-            const basePrice = parseFloat(document.getElementById("prod-price").value) || 0;
+            const nameInput = document.getElementById("prod-name");
+            const sourceSel = document.getElementById("prod-source");
+            const targetSel = document.getElementById("prod-target");
+            const priceInput = document.getElementById("prod-price");
 
-            if (!categoryId) {
-                alert("Выберите подкатегорию привязки!");
+            if (!categoryId) { UX.error(document.getElementById("prod-category-select"), "Выберите подкатегорию привязки!"); return; }
+            if (!nameInput.value.trim()) { UX.error(nameInput, "Введите название услуги."); return; }
+            if (!sourceSel.value) { UX.error(sourceSel, "Выберите язык оригинала."); return; }
+            if (!targetSel.value) { UX.error(targetSel, "Выберите язык перевода."); return; }
+            if (sourceSel.value === targetSel.value) { UX.error(targetSel, "Язык перевода не должен совпадать с языком оригинала."); return; }
+            const basePrice = parseFloat(priceInput.value);
+            if (!isFinite(basePrice) || basePrice < 0) { UX.error(priceInput, "Стоимость должна быть числом ≥ 0."); return; }
+
+            const compCheck = validateProductComponents();
+            if (!compCheck.valid) {
+                if (compCheck.firstRow) compCheck.firstRow.focus();
+                UX.toast("Исправьте ошибки в компонентах услуги.");
                 return;
             }
 
             const cat = store.categories.find(c => c.id === categoryId);
             if (cat) {
                 cat.isProduct = true;
-                cat.name = name;
-                cat.description = desc;
+                cat.productName = nameInput.value.trim();
+                cat.description = document.getElementById("prod-desc").value.trim();
                 cat.templateId = tplId;
-                cat.sourceLang = sourceLang;
-                cat.targetLang = targetLang;
+                cat.sourceLang = sourceSel.value;
+                cat.targetLang = targetSel.value;
                 cat.basePrice = basePrice;
-                cat.components = prodComponents.filter(c => c.name.trim() !== '');
-                
+                cat.components = prodComponents.map(c => ({
+                    id: c.id,
+                    name: (c.name || "").trim(),
+                    isRequired: !!c.isRequired,
+                    additionalPrice: isFinite(parseFloat(c.additionalPrice)) ? parseFloat(c.additionalPrice) : 0
+                }));
                 store.saveCategories();
             }
 
-            document.getElementById("product-form").reset();
-            prodComponents = [];
-            addProductComponentRow();
-            document.getElementById("prod-submit-btn").textContent = "Применить статус товара";
-            document.getElementById("deconfigure-btn-container").innerHTML = '';
+            UX.toast("Услуга сохранена.");
+            resetProductForm();
             refreshUI();
         }
 
-        function deconfigureProduct(id) {
-            if (!confirm("Вы уверены, что хотите снять статус услуги с этой подкатегории? Настройки цены и компонентов будут стерты.")) {
-                return;
-            }
+        async function deconfigureProduct(id) {
             const cat = store.categories.find(c => c.id === id);
-            if (cat) {
-                cat.isProduct = false;
-                delete cat.sourceLang;
-                delete cat.targetLang;
-                delete cat.basePrice;
-                delete cat.components;
-                delete cat.description;
-                delete cat.templateId;
-                store.saveCategories();
-            }
-            document.getElementById("product-form").reset();
-            prodComponents = [];
-            addProductComponentRow();
-            document.getElementById("prod-submit-btn").textContent = "Применить статус товара";
-            document.getElementById("deconfigure-btn-container").innerHTML = '';
+            if (!cat) return;
+            const ok = await UX.confirm({
+                title: "Снятие статуса услуги",
+                message: "Снять статус услуги с «" + getServiceDisplayName(cat) + "»? Настройки цены, компонентов и перевода будут стёрты.",
+                confirmText: "Снять статус",
+                danger: true
+            });
+            if (!ok) return;
+            if (currentProductId === id && !(await UX.discard('product-form'))) return;
+            cat.isProduct = false;
+            delete cat.productName;
+            delete cat.sourceLang;
+            delete cat.targetLang;
+            delete cat.basePrice;
+            delete cat.components;
+            delete cat.description;
+            delete cat.templateId;
+            store.saveCategories();
+            UX.toast("Статус услуги снят.");
+            if (currentProductId === id) resetProductForm();
             refreshUI();
         }
 
         function renderProductsList() {
             const container = document.getElementById("products-list");
-            let html = '';
+            const query = (document.getElementById("prod-search").value || "").trim().toLowerCase();
 
             const activeProducts = store.categories.filter(c => c.isProduct);
+            const filtered = activeProducts.filter(p => {
+                if (!query) return true;
+                const sName = store.languages.find(l => l.code === p.sourceLang)?.name || "";
+                const tName = store.languages.find(l => l.code === p.targetLang)?.name || "";
+                const haystack = [p.productName || "", p.name, p.description || "", getCategoryFullPathName(p.id), sName, tName].join(" ").toLowerCase();
+                return haystack.includes(query);
+            });
 
-            activeProducts.forEach(p => {
+            document.getElementById("prod-count-label").textContent = query
+                ? "Найдено: " + filtered.length + " из " + activeProducts.length
+                : "Всего: " + activeProducts.length;
+
+            let html = '';
+            filtered.forEach(p => {
                 const pathName = getCategoryFullPathName(p.id);
-                const sName = store.languages.find(l => l.code === p.sourceLang)?.name || p.sourceLang.toUpperCase();
-                const tName = store.languages.find(l => l.code === p.targetLang)?.name || p.targetLang.toUpperCase();
+                const sName = store.languages.find(l => l.code === p.sourceLang)?.name || (p.sourceLang || "").toUpperCase();
+                const tName = store.languages.find(l => l.code === p.targetLang)?.name || (p.targetLang || "").toUpperCase();
 
                 html += `
                     <div class="service-summary bg-slate-50 p-3 rounded-lg border border-slate-200 text-xs">
                         <div class="flex flex-wrap justify-between items-start gap-3">
                             <div>
-                                <span class="font-bold text-slate-800">${store.escapeHtml(p.name)}</span>
-                                <span class="text-[10px] text-indigo-600 block">${store.escapeHtml(pathName)} | ${store.escapeHtml(sName)} → ${store.escapeHtml(tName)} | База: ${p.basePrice}</span>
+                                <span class="font-bold text-slate-800">${store.escapeHtml(getServiceDisplayName(p))}</span>
+                                <span class="text-[10px] text-indigo-600 block">${store.escapeHtml(pathName)} | ${store.escapeHtml(sName)} → ${store.escapeHtml(tName)} | База: ${UX.formatPrice(p.basePrice)}</span>
                             </div>
                             <div class="flex flex-wrap items-center gap-2">
                                 <button onclick="startEditProduct('${p.id}')" class="text-indigo-600 hover:text-indigo-800 font-semibold px-1">Изменить</button>
-                                <button aria-label="Снять статус услуги ${store.escapeHtml(p.name)}" onclick="deconfigureProduct('${p.id}')" class="text-rose-500 hover:text-rose-700 font-bold px-1">×</button>
+                                <button aria-label="Снять статус услуги ${store.escapeHtml(getServiceDisplayName(p))}" onclick="deconfigureProduct('${p.id}')" class="text-rose-500 hover:text-rose-700 font-bold px-1">×</button>
                             </div>
                         </div>
                         <p class="text-slate-500 text-[10px] mt-1 italic">${store.escapeHtml(p.description) || 'Описания нет'}</p>
@@ -343,23 +511,28 @@
                             ${(p.components || []).map(c => `
                                 <div class="flex justify-between text-[9px] text-slate-600">
                                     <span>${c.isRequired ? 'Обязательный:' : 'Необязательный:'} ${store.escapeHtml(c.name)}</span>
-                                    <span>${c.additionalPrice > 0 ? '+' + c.additionalPrice : 'В базовой цене'}</span>
+                                    <span>${c.additionalPrice > 0 ? '+' + UX.formatPrice(c.additionalPrice) : 'В базовой цене'}</span>
                                 </div>
-                            `).join('')}
+                            `).join('') || '<div class="text-[9px] text-slate-400 italic">Компоненты не заданы</div>'}
                         </div>
                     </div>
                 `;
             });
 
-            container.innerHTML = html || '<div class="empty-state text-slate-500 text-center py-8"><p>Услуг пока нет. Выберите категорию без вложенных разделов и задайте параметры перевода.</p><p class="mt-2">Вначале настройте <a href="categories.html" class="text-indigo-600 underline">категории документов</a> и <a href="templates.html" class="text-indigo-600 underline">шаблоны перевода</a>.</p></div>';
+            container.innerHTML = html || (activeProducts.length
+                ? '<div class="empty-state text-slate-500 text-center py-8"><p>По запросу ничего не найдено.</p></div>'
+                : '<div class="empty-state text-slate-500 text-center py-8"><p>Услуг пока нет. Выберите категорию без вложенных разделов и задайте параметры перевода.</p><p class="mt-2">Вначале настройте <a href="categories.html" class="text-indigo-600 underline">категории документов</a> и <a href="templates.html" class="text-indigo-600 underline">шаблоны перевода</a>.</p></div>');
         }
 
         function refreshUI() {
             updateTemplatesDropdown();
             updateProductCategoryDropdown();
             updateProductLanguageSelectors();
-            renderProductComponentsEditor();
             renderProductsList();
+            if (currentProductId) {
+                const cat = store.categories.find(c => c.id === currentProductId);
+                if (cat && !cat.isProduct) setFormMode("Настроить категорию как товар");
+            }
         }
     </script>
 </body>

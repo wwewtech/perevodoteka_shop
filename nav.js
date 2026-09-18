@@ -10,22 +10,51 @@ function renderNavbar(currentPageId) {
     const link = page => `<a href="${page.href}" id="${page.id}" class="nav-link${page.id === currentPageId ? ' is-active' : ''}"${page.id === currentPageId ? ' aria-current="page"' : ''}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">${page.icon}</svg><span>${page.label}</span></a>`;
     document.getElementById('navbar-placeholder').innerHTML = `
         <a class="skip-link" href="#main-content">К содержимому</a>
-        <aside class="app-sidebar">
-            <a href="index.html" class="brand" aria-label="Бюро переводов — каталог">
-                <span class="brand-symbol" aria-hidden="true">а<span>↗</span></span>
-                <span class="brand-name">Бюро<span>переводов</span></span>
-            </a>
-            <nav class="sidebar-nav" aria-label="Основная навигация">
+        <aside class="app-sidebar" id="app-sidebar">
+            <div class="sidebar-top">
+                <a href="index.html" class="brand" aria-label="Бюро переводов — каталог">
+                    <span class="brand-symbol" aria-hidden="true">а<span>↗</span></span>
+                    <span class="brand-name">Бюро<span>переводов</span></span>
+                </a>
+                <button type="button" class="mobile-menu-button" aria-expanded="false" aria-controls="sidebar-nav" aria-label="Открыть меню">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+                </button>
+            </div>
+            <nav class="sidebar-nav" id="sidebar-nav" aria-label="Основная навигация">
                 ${link(pages[0])}
                 <span class="nav-caption">Управление</span>
                 ${pages.slice(1).map(link).join('')}
             </nav>
             <div class="sidebar-note"><span>Ваше рабочее пространство</span><p>Данные сохраняются в этом браузере.</p></div>
         </aside>
-        <header class="workspace-header"><span>Рабочее пространство <span aria-hidden="true">/</span> <strong>${currentPage.label}</strong></span><a href="${currentPageId === 'nav-catalog' ? 'products_admin.html' : 'index.html'}">${currentPageId === 'nav-catalog' ? 'Управление услугами' : 'Открыть каталог'} <span aria-hidden="true">↗</span></a></header>
+        <header class="workspace-header"><span class="workspace-location">Рабочее пространство <span aria-hidden="true">/</span> <strong>${currentPage.label}</strong></span><a class="workspace-breadcrumb" href="${currentPageId === 'nav-catalog' ? 'products_admin.html' : 'index.html'}">${currentPageId === 'nav-catalog' ? 'Управление услугами' : 'Открыть каталог'} <span aria-hidden="true">↗</span></a></header>
     `;
     const main = document.querySelector('main');
     main.id = 'main-content';
     main.tabIndex = -1;
+    const sidebar = document.getElementById('app-sidebar');
+    const menuButton = sidebar.querySelector('.mobile-menu-button');
+    if (menuButton) {
+        menuButton.addEventListener('click', () => {
+            const expanded = sidebar.classList.toggle('is-expanded');
+            menuButton.setAttribute('aria-expanded', String(expanded));
+            menuButton.setAttribute('aria-label', expanded ? 'Закрыть меню' : 'Открыть меню');
+        });
+        sidebar.querySelector('.sidebar-nav').addEventListener('click', event => {
+            if (event.target.closest('a')) {
+                sidebar.classList.remove('is-expanded');
+                menuButton.setAttribute('aria-expanded', 'false');
+                menuButton.setAttribute('aria-label', 'Открыть меню');
+            }
+        });
+        document.addEventListener('keydown', event => {
+            if (event.key === 'Escape' && sidebar.classList.contains('is-expanded')) {
+                sidebar.classList.remove('is-expanded');
+                menuButton.setAttribute('aria-expanded', 'false');
+                menuButton.setAttribute('aria-label', 'Открыть меню');
+                menuButton.focus();
+            }
+        });
+    }
 }
 window.renderNavbar = renderNavbar;
