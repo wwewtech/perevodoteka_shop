@@ -1,0 +1,27 @@
+# Инструменты и агент
+.opencode/
+
+# Зависимости
+node_modules/
+package-lock.json
+bun.lock
+yarn.lock
+pnpm-lock.yaml
+
+# Служебные файлы ОС
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Редакторы и IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Логи, временные и резервные файлы
+*.log
+*.tmp
+*.bak
+*.orig
